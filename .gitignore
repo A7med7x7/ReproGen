@@ -6,7 +6,12 @@ __pycache__/
 # C extensions
 *.so
 
+# MacOS related 
+
+.DS_Store
+
 # Distribution / packaging
+
 .Python
 build/
 develop-eggs/
