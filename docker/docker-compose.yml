@@ -22,10 +22,10 @@ services:
       - "9000:9000"                      
       - "9001:9001"                      
     volumes:
-      - ./minio-data:/data              
+      - minio-data:/data              
     environment:
-      - MINIO_ROOT_USER=$MINIO_ACCESS_KEY
-      - MINIO_ROOT_PASSWORD=$MINIO_SECRET_ACCESS_KEY
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
       - MINIO_STORAGE_USE_HTTPS=false
     command: server /data --console-address ":9001"
     restart: always
@@ -39,19 +39,20 @@ services:
     entrypoint: /bin/sh
     command: -c "chmod +x /create-bucket.sh && /create-bucket.sh"
     environment:
-      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
-      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_ACCESS_KEY}
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.20.2          # MLFlow tracking server
+    image: ghcr.io/mlflow/mlflow:v2.20.2
+    container_name: mlflow
     ports:
-      - "5000:5000"                      # Expose MLFlow on localhost:5000
+      - "5000:5000"
     environment:
       - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
-      - AWS_ACCESS_KEY_ID=minioadmin
-      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_ACCESS_KEY_ID=${MINIO_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_SECRET_ACCESS_KEY}
     volumes:
-      - ./mlflow-data/mlruns:/mlflow/mlruns  # Store experiment metadata and logs
+      - ./mlflow-data/mlruns:/mlflow/mlruns
     command: >
       mlflow server \
         --backend-store-uri /mlflow/mlruns \
@@ -62,8 +63,5 @@ services:
       - minio-setup
 
 volumes:
-  volumes:
   minio-data:
   mlruns:
-  notebooks:
-  data:
