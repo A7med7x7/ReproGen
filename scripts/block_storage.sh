@@ -7,4 +7,4 @@ sudo mkfs.ext4 /dev/vdb1
 
 # Mount block storage
 sudo mount /dev/vdb1 /mnt/block
-sudo chown -R cc:cc /mnt/block
+sudo chown -R ahmed_offsechq_com:users /mnt/block
