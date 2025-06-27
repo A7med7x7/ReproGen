@@ -6,62 +6,33 @@ services:
     ports: 
     - "8888:8888"
     volumes:
-      - ./notebooks:/home/jovyan/work     
-      - ./data:/data                        
-      - ./requirements.txt:/tmp/requirements.txt
+      - ./notebooks:/home/jovyan/work/notebooks     
+      - ./src:/home/jovyan/work/src          
+      - /mnt/data:/home/jovyan/data        
     command: >
       bash -c "start-notebook.sh"
     environment:
       - JUPYTER_ENABLE_LAB=yes
     restart: always
 
-  minio:
-    image: minio/minio:latest 
-    container_name: minio
-    ports:
-      - "9000:9000"                      
-      - "9001:9001"                      
-    volumes:
-      - minio-data:/data              
-    environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-      - MINIO_STORAGE_USE_HTTPS=false
-    command: server /data --console-address ":9001"
-    restart: always
-
-  minio-setup:
-    image: quay.io/minio/mc
-    depends_on:
-      - minio
-    volumes:
-      - ./minio/create-bucket.sh:/create-bucket.sh
-    entrypoint: /bin/sh
-    command: -c "chmod +x /create-bucket.sh && /create-bucket.sh"
-    environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.20.2
     container_name: mlflow
+    restart: always
     ports:
       - "5000:5000"
     environment:
-      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
-      - AWS_ACCESS_KEY_ID=${MINIO_ACCESS_KEY}
-      - AWS_SECRET_ACCESS_KEY=${MINIO_SECRET_ACCESS_KEY}
+      - MLFLOW_S3_ENDPOINT_URL=https://chi.tacc.chameleoncloud.org:8080
+      - AWS_ACCESS_KEY_ID=${S3_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
     volumes:
-      - ./mlflow-data/mlruns:/mlflow/mlruns
+      - /mnt/metrics:/mlflow/mlruns
     command: >
       mlflow server \
         --backend-store-uri /mlflow/mlruns \
-        --default-artifact-root s3://mlflow/ \
+        --default-artifact-root s3://fancyproject-mlflow/mlflow-artifact/ --serve-artifacts \
         --host 0.0.0.0
-    depends_on:
-      - minio
-      - minio-setup
+    
 
 volumes:
-  minio-data:
   mlruns:
