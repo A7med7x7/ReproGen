@@ -1,40 +1,43 @@
 services:
 
   jupyter:
-    image: jupyter/base-notebook:latest  
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyter-cuda
     container_name: jupyter
     ports: 
     - "8888:8888"
     volumes:
-      - ./notebooks:/home/jovyan/work/notebooks     
-      - ./src:/home/jovyan/work/src          
-      - ~/.aws:/home/jovyan/.aws
+      - ../notebooks:/home/jovyan/work/notebooks     
+      - ./src:/home/jovyan/work/src        
       - /mnt/data:/home/jovyan/data        
     environment:
       - JUPYTER_ENABLE_LAB=yes
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
     restart: always
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.20.2
+    build:
+       context: . 
+       dockerfile: Dockerfile.mlflow
     container_name: mlflow
     restart: always
     ports:
-      - "5000:5000"
+      - "8000:8000"
     environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:8000 
       - MLFLOW_S3_ENDPOINT_URL=https://chi.tacc.chameleoncloud.org:7480
       - AWS_ACCESS_KEY_ID=${S3_ACCESS_KEY}
-      - AWS_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}  
     volumes:
       - /mnt/metrics:/mlflow/mlruns 
     command:
       - mlflow
       - server
-      - --backend-store-uri=sqlite:///mlflow.db
+      - --backend-store-uri=/mlflow/mlruns
       - --artifacts-destination=s3://fancyproject-mlflow-artifacts
       - --serve-artifacts
       - --host=0.0.0.0
-      - --port=5000
+      - --port=8000
 
 
 volumes:
