@@ -31,11 +31,11 @@ Provision your server and configure it for your project.
 
 ### 3. Generate Environment Variables
 
-On your computer instance (SSH-ing for your local machine via shell), generate the `.env` file required for Docker Compose:
-From the project root `/home/cc/ReproGen` run:
+On your computer instance (SSH-ing from your local machine via shell), generate the `.env` file required for Docker Compose:
+From your **home directory** (`~`), run:
 
 ```sh
-./scripts/generate_env.sh
+ ./ReproGen/scripts/generate_env.sh
 ```
 
 Expected output: you should see something like:
@@ -46,7 +46,7 @@ Expected output: you should see something like:
 
 ### 4. Start the Containarized Environment
 
-From the project root `/home/cc/ReproGen` run:
+From your **home directory** (`~`), run:
 
 ```sh
 docker compose --env-file ~/.env -f ReproGen/docker/docker-compose.yml up -d --build
@@ -67,6 +67,7 @@ docker logs jupyter 2>&1 | grep -oE "http://127.0.0.1:8888[^ ]*token=[^ ]*"
 ```sh
 gh auth login
 ```
+
 Follow the intstructions to authenticate.
 
 2. Access MLFlow UI at `<HOSTIP>:8000`
