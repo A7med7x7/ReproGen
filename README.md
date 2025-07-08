@@ -49,7 +49,7 @@ Expected output: you should see something like:
 From the project root `/home/cc/ReproGen` run:
 
 ```sh
-docker compose --env-file ~/.env -f docker/docker-compose.yml up -d --build
+docker compose --env-file ~/.env -f ReproGen/docker/docker-compose.yml up -d --build
 ```
 
 ---
@@ -67,8 +67,9 @@ docker logs jupyter 2>&1 | grep -oE "http://127.0.0.1:8888[^ ]*token=[^ ]*"
 ```sh
 gh auth login
 ```
-2. Access MLFlow UI at `<HOSTIP>:8000`
 Follow the intstructions to authenticate.
+
+2. Access MLFlow UI at `<HOSTIP>:8000`
 
 ---
 
