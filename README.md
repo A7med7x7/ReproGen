@@ -1,1 +1,81 @@
-# ReproGen
+# ReproGen ML Environment on Chameleon Cloud
+
+This repository automates setting up buckets, spinning up VMs and launching a fully configured Jupyter environment with MLFlow tracking server system.
+
+## Quickstart
+
+### 0. Prerequisites
+- You must have a working [Chameleon Cloud](https://chameleoncloud.org) account.
+- You have already reserved a lease on Chameleon Cloud that includes a GPU-enabled bare metal node
+
+### 1. Create S3 Buckets
+
+Run the notebook `0_create_buckets.ipynb` to create S3-compatible buckets for datasets, metrics, and artifacts. to live beyond your instance lifetime. 
+
+**In [Chameleon JupyterHub](https://jupyter.chameleoncloud.org/hub/), open and run:**
+
+- [`chi/0_create_buckets.ipynb`](chi/0_create_buckets.ipynb)
+
+---
+
+### 2. Launch and Set Up the Server
+
+Provision your server and configure it for your project.
+
+**In [Chameleon JupyterHub](https://jupyter.chameleoncloud.org/hub/), open and run:**
+
+- For NVIDIA: [`chi/1_create_server_nvidia.ipynb`](chi/1_create_server_nvidia.ipynb)
+- For AMD:  [`chi/1_create_server_amd.ipynb`](chi/1_create_server_amd.ipynb)
+
+---
+
+### 3. Generate Environment Variables
+
+On your computer instance (SSH-ing for your local machine via shell), generate the `.env` file required for Docker Compose:
+From the project root `/home/cc/ReproGen` run:
+
+```sh
+./scripts/generate_env.sh
+```
+
+Expected output: you should see something like:
+
+`✅ The .env file has been generated successfully at : /home/cc/.env`
+
+---
+
+### 4. Start the Containarized Environment
+
+From the project root `/home/cc/ReproGen` run:
+
+```sh
+docker compose --env-file ~/.env -f docker/docker-compose.yml up -d --build
+```
+
+---
+
+### 5. Login to Jupyter Lab and MLFlow UI
+
+1. Access your jupyter lab at:  `<HOST_IP>:8888` you can grap the token from running image using the command:
+
+```sh 
+docker logs jupyter 2>&1 | grep -oE "http://127.0.0.1:8888[^ ]*token=[^ ]*"
+```
+
+- In the Jupyter terminal, log into GitHub using the CLI
+
+```sh
+gh auth login
+```
+2. Access MLFlow UI at `<HOSTIP>:8000`
+Follow the intstructions to authenticate.
+
+---
+
+### 7. Clean Up Resources
+
+When finished, delete your server to free up resources.
+
+**In Chameleon JupyterHub, open and run:**
+
+- [`chi/2_delete_resources.ipynb`](chi/2_delete_resources.ipynb)
