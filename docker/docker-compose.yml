@@ -14,7 +14,8 @@ services:
     environment:
       - JUPYTER_ENABLE_LAB=yes
       - MLFLOW_TRACKING_URI=http://mlflow:8000
-    restart: always
+    runtime: nvidia
+    restart: always 
 
   mlflow:
     build:
