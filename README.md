@@ -74,7 +74,7 @@ Follow the intstructions to authenticate.
 
 ---
 
-### 7. Clean Up Resources
+### 6. Clean Up Resources
 
 When finished, delete your server to free up resources.
 
