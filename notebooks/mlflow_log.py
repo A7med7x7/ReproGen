@@ -1,3 +1,8 @@
+"""
+This module contains functions to log details about the
+execution environment, like GPU information, Python environment,
+and Git repository status.
+"""
 import subprocess
 import platform
 import os
@@ -5,6 +10,10 @@ import sys
 import mlflow
 
 def log_gpu():
+    """
+    This function checks for the availability of GPUs using PyTorch and TensorFlow,
+    and logs the GPU details if available.
+    """
     try:
         import torch
         if torch.cuda.is_available():
@@ -25,21 +34,12 @@ def log_gpu():
         mlflow.set_tag("gpu.available", False)
         mlflow.set_tag("gpu.framework", "none")
         return
-    
-    try:
-        smi_output = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=memory.total,memory.free,memory.used", "--format=csv,nounits,noheader"]
-        )
-        total, free, used = smi_output.decode().strip().split(', ')
-        mlflow.log_metrics({
-            "gpu_mem_total_mb": int(total),
-            "gpu_mem_free_mb": int(free),
-            "gpu_mem_used_mb": int(used)
-        })
-    except Exception as e:
-        mlflow.set_tag("gpu.smi_error", str(e))
 
 def log_python():
+    """
+    This function logs the Python version, platform information, 
+    and the list of installed packages.
+    """
     mlflow.set_tag("python.version", sys.version.replace("\n", " "))
     mlflow.set_tag("platform", platform.platform())
     try:
@@ -51,6 +51,9 @@ def log_python():
         mlflow.set_tag("pip_freeze_error", str(e))
 
 def log_git():
+    """
+    This function logs the current commit hash, branch name, diff, and the last commit message.
+    """
     try:
         commit = subprocess.getoutput("git rev-parse HEAD")
         branch = subprocess.getoutput("git rev-parse --abbrev-ref HEAD")
