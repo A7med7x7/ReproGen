@@ -10,10 +10,13 @@ services:
     volumes:
       - ../notebooks:/home/jovyan/work/notebooks     
       - ../src:/home/jovyan/work/src        
+      - ../utils:/home/jovyan/work/utils
       - /mnt/data:/home/jovyan/data        
     environment:
       - JUPYTER_ENABLE_LAB=yes
+      - PYTHONPATH=/home/jovyan/work/
       - MLFLOW_TRACKING_URI=http://mlflow:8000
+      
     runtime: nvidia
     restart: always 
 
@@ -31,6 +34,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
       - AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED
       - AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED  
+      - HF_TOKEN=${HF_TOKEN}
     volumes:
       - /mnt/metrics:/mlflow/mlruns 
     command:
