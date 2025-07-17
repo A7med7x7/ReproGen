@@ -9,8 +9,8 @@ __pycache__/
 # MacOS related 
 .DS_Store
 .vscode
-# Distribution / packaging
 
+# Distribution / packaging
 .Python
 build/
 develop-eggs/

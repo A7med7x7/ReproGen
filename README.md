@@ -1,8 +1,6 @@
-# ReproGen ML Environment on Chameleon Cloud
+# ML Environment on Chameleon Cloud
 
 This repository automates setting up buckets, spinning up VMs and launching a fully configured Jupyter environment with MLFlow tracking server system.
-
-## Quickstart
 
 ### 0. Prerequisites
 - You must have a working [Chameleon Cloud](https://chameleoncloud.org) account.
@@ -38,7 +36,8 @@ From your **home directory** (`~`), run:
  ./ReproGen/scripts/generate_env.sh
 ```
 
-Expected output: you should see something like:
+you will be prompted to enter your HuggingFace Token,after inputting.
+you should see something like:
 
 `✅ The .env file has been generated successfully at : /home/cc/.env`
 
@@ -70,7 +69,7 @@ gh auth login
 
 Follow the intstructions to authenticate.
 
-2. Access MLFlow UI at `<HOSTIP>:8000`
+2. Access MLFlow UI at `<HOST_IP>:8000`
 
 ---
 
