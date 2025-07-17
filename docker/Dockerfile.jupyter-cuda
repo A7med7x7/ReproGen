@@ -1,6 +1,5 @@
 FROM quay.io/jupyter/pytorch-notebook:cuda12-latest
 
-
 USER root
 
 # Install GitHub CLI tool
@@ -14,6 +13,8 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 USER ${NB_UID}
+# Install psutil for system metrics
+RUN pip install --no-cache-dir psutil    
 
 # Install Lightning
 RUN pip install --pre --no-cache-dir lightning && \
@@ -29,4 +30,3 @@ RUN pip install --pre --no-cache-dir pynvml && \
 # Install dependencies
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt || true
-
