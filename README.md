@@ -8,7 +8,7 @@ This repository automates setting up buckets, spinning up VMs and launching a fu
 
 ### 1. Create S3 Buckets
 
-Run the notebook `0_create_buckets.ipynb` to create S3-compatible buckets for datasets, metrics, and artifacts. to live beyond your instance lifetime. 
+Run the notebook `0_create_buckets.ipynb` to create S3-compatible buckets for datasets, metrics, and artifacts. to live beyond your instance lifetime.
 
 **In [Chameleon JupyterHub](https://jupyter.chameleoncloud.org/hub/), open and run:**
 
@@ -57,7 +57,7 @@ docker compose --env-file ~/.env -f ReproGen/docker/docker-compose.yml up -d --b
 
 1. Access your jupyter lab at:  `<HOST_IP>:8888` you can grap the token from running image using the command:
 
-```sh 
+```sh
 docker logs jupyter 2>&1 | grep -oE "http://127.0.0.1:8888[^ ]*token=[^ ]*"
 ```
 

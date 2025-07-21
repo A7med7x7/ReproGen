@@ -16,7 +16,6 @@ services:
       - JUPYTER_ENABLE_LAB=yes
       - PYTHONPATH=/home/jovyan/work/
       - MLFLOW_TRACKING_URI=http://mlflow:8000
-      
     runtime: nvidia
     restart: always 
 

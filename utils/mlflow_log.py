@@ -74,6 +74,10 @@ def log_git():
             ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=repo_root
         ).decode().strip()
         
+        commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=repo_root
+        ).decode().strip()
+        
         git_diff = subprocess.check_output(
             ["git", "diff"], cwd=repo_root
         ).decode()
