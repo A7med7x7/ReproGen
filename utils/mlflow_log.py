@@ -62,7 +62,7 @@ def log_git():
             ["git", "rev-parse", "--show-toplevel"], stderr=subprocess.DEVNULL
         ).decode().strip()
         
-        is_dirty = subprocess.call(
+        is_dirty = subprocess.call( 
             ["git", "diff", "--quiet"], cwd=repo_root
         ) != 0
         
@@ -82,11 +82,19 @@ def log_git():
             ["git", "diff"], cwd=repo_root
         ).decode()
         
-        mlflow.set_tag("git.remote", git_remote)
-        mlflow.set_tag("git.branch", branch)
+        
+        git_info = f"""
+        Remote: {git_remote}
+        Branch: {branch}
+        Commit: {commit}
+
+        --- Git Diff ---
+        {git_diff}
+        """
+        
+        mlflow.set_tag("Branch", str(branch))
         mlflow.set_tag("git.dirty", str(is_dirty))
-        mlflow.log_text("git.commit", commit)
-        mlflow.log_text(git_diff, artifact_file="git_diff.txt")
+        mlflow.log_text(git_info.strip(), "git_info.txt")
 
     except subprocess.CalledProcessError:
-        mlflow.set_tag("git.status", "may not a Git repository or error")
+        mlflow.set_tag("git.status", "not a git repo or error")
