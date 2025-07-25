@@ -1,0 +1,7 @@
+{
+  "project_name": "my-ml-project",
+  "gpu_type": ["nvidia", "amd", "none"],
+  "framework": ["pytorch", "pytorch lightning", "scikit-learn", "tensorflow"],
+  "hf_token": ["yes", "no"],
+  "hf_token_value": ""
+}
