@@ -1,0 +1,8 @@
+FROM ghcr.io/mlflow/mlflow:v3.0.0
+
+RUN pip uninstall -y boto3 botocore s3transfer || true
+
+RUN pip install --no-cache-dir \
+    boto3==1.35.93 \
+    botocore==1.35.93 \
+    s3transfer==0.10.0

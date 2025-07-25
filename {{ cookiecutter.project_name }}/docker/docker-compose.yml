@@ -1,0 +1,46 @@
+services:
+
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyter-cuda
+    container_name: jupyter
+    ports: 
+    - "8888:8888"
+    volumes:
+      - ../notebooks:/home/jovyan/work/notebooks     
+      - ../src:/home/jovyan/work/src        
+      - ../utils:/home/jovyan/work/utils
+      - /mnt/data:/home/jovyan/data        
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - PYTHONPATH=/home/jovyan/work/
+      - MLFLOW_TRACKING_URI=http://mlflow:8000
+    runtime: nvidia
+    restart: always 
+
+  mlflow:
+    build:
+       context: . 
+       dockerfile: Dockerfile.mlflow
+    container_name: mlflow
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
+      - AWS_ACCESS_KEY_ID=${S3_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
+      - AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED
+      - AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED  
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - /mnt/metrics:/mlflow/mlruns 
+    command:
+      - mlflow
+      - server
+      - --backend-store-uri=/mlflow/mlruns
+      - --artifacts-destination=s3://${PROJECT_NAME}-mlflow-artifacts
+      - --serve-artifacts
+      - --host=0.0.0.0
+      - --port=8000
