@@ -2,42 +2,40 @@ import os,sys
 import mlflow
 import platform
 import subprocess
-from pynvml import nvmlInit, nvmlDeviceGetCount, nvmlDeviceGetName, nvmlShutdown, nvmlDeviceGetMemoryInfo, nvmlDeviceGetHandleByIndex
+from pynvml import nvmlInit, nvmlDeviceGetCount, nvmlShutdown, NVMLError
 
 def log_gpu():
     """
     This function checks for the availability of GPU spynvml (NVIDIA),
-    and logs the GPU Device name, total memory and count of devices.
+    and logs the GPU count, and nvidia-smi output.
     """
     try:
-        nvmlInit()
-        count = nvmlDeviceGetCount()
-        for i in range(count):
-            handle = nvmlDeviceGetHandleByIndex(i)
-            name = nvmlDeviceGetName(handle).decode() if isinstance(name := nvmlDeviceGetName(handle), bytes) else name
-            mem_info = nvmlDeviceGetMemoryInfo(handle)
-            mlflow.set_tag(f"gpu.{i}.name", name)
-            mlflow.set_tag(f"gpu.{i}.memory.total_MB", mem_info.total // (1024 ** 2))
-        mlflow.set_tag("gpu.count", count)
-        nvmlShutdown()
-    except ImportError:
-        mlflow.set_tag("gpu.info", "pynvml not installed")
-    except Exception as e:
-        mlflow.set_tag("gpu.error", str(e))
+        try:
+            nvmlInit()
+            count = nvmlDeviceGetCount()
+            mlflow.log_param("gpu.count", count)
+        except NVMLError as nvml_err:
+            mlflow.set_tag("gpu.status", f"NVML ereror: {str(nvml_err)}")
+            return
+        except Exception as e:
+            mlflow.set_tag("gpu.status", f"NVML init failed: {str(e)}")
+            return
 
-    # Log nvidia-smi or rocm-smi output
-    try:
-        gpu_info = next(
-            (
-                subprocess.run(cmd, capture_output=True, text=True).stdout
-                for cmd in ["nvidia-smi", "rocm-smi"]
-                if subprocess.run(f"command -v {cmd}", shell=True, capture_output=True).returncode == 0
-            ),
-            "No GPU utility (nvidia-smi or rocm-smi) found."
-        )
-        mlflow.log_text(gpu_info, "gpu-info.txt")
+        # nvidia-smi
+        try:
+            smi_output = subprocess.check_output(["nvidia-smi"], text=True)
+            mlflow.log_text(smi_output, artifact_file="gpu-info.txt")
+        except Exception as smi_err:
+            mlflow.set_tag("gpu.status", f"nvidia-smi failed with: {smi_err}")
+
     except Exception as e:
-        mlflow.set_tag("gpu_info_dump_error", str(e))
+        mlflow.set_tag("gpu.status", f"unexpected error: {str(e)}")
+
+    finally:
+        try:
+            nvmlShutdown()
+        except Exception as shutdown_err:
+            mlflow.set_tag("gpu.shutdown", f"warning: {str(shutdown_err)}")
 
 def log_python():
     """
