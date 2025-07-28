@@ -3,7 +3,16 @@ services:
   jupyter:
     build:
       context: .
-      dockerfile: Dockerfile.jupyter-cuda
+      dockerfile: >
+        {% if cookiecutter.framework == 'pytorch' %}
+        Dockerfile.jupyter-pytorch
+        {% elif cookiecutter.framework == 'pytorch lightning' %}
+        Dockerfile.jupyter-pytorch
+        {% elif cookiecutter.framework == 'scikit_learn' %}
+        Dockerfile.jupyter-data-science
+        {% elif cookiecutter.framework == 'tensorflow' %}
+        Dockerfile.jupyter-tensorflow
+        {% endif %}
     container_name: jupyter
     ports: 
     - "8888:8888"
@@ -16,7 +25,12 @@ services:
       - JUPYTER_ENABLE_LAB=yes
       - PYTHONPATH=/home/jovyan/work/
       - MLFLOW_TRACKING_URI=http://mlflow:8000
-    runtime: nvidia
+    runtime: >
+      {% if cookiecutter.gpu_type == 'amd' %}
+      amd
+      {% elif cookiecutter.gpu_type == 'nvidia' %}
+      nvidia
+      {% endif %}
     restart: always 
 
   mlflow:
