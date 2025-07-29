@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:2.1.2-cuda11.8-cudnn8-devel
+FROM quay.io/jupyter/tensorflow-notebook:cuda-latest
 
 USER root
 
@@ -15,13 +15,6 @@ RUN apt-get update && \
 USER ${NB_UID}
 # Install psutil for system metrics
 RUN pip install --no-cache-dir psutil    
-
-
-
-# Install Lightning
-RUN pip install --pre --no-cache-dir lightning && \
-    fix-permissions "${CONDA_DIR}" && \
-    fix-permissions "/home/${NB_USER}"
 
 # Install MLFlow and pynvml 
 RUN pip install --pre --no-cache-dir pynvml && \
