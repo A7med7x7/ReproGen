@@ -71,6 +71,16 @@ Follow the intstructions to authenticate.
 
 2. Access MLFlow UI at `<HOST_IP>:8000`
 
+### 5.5. Stop the Containerized Environment
+If you’d like to pause your environment, you can stop the running containers with the command:
+
+```sh
+docker compose --env-file ~/.env -f ReproGen/docker/docker-compose.yml down
+```
+
+This will stop and remove the containers, but all your data in mounted volumes will remain safe.
+When you want to restart later, simply run the docker compose up command again (see Step 4).
+
 ---
 
 ### 6. Clean Up Resources
