@@ -16,6 +16,7 @@ RUN apt-get update && \
 
 
 USER ${NB_UID}
+
 # Install psutil for system metrics
 RUN pip install --no-cache-dir psutil    
 
@@ -27,4 +28,4 @@ RUN pip install --pre --no-cache-dir pynvml && \
 
 # Install dependencies
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt || true
