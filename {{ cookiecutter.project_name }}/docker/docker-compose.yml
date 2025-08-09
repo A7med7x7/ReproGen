@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: >-
         {% set compute_platform = 'cuda' if cookiecutter.gpu_type == 'nvidia' else 'rocm' if cookiecutter.gpu_type == 'amd' else 'cpu' %}
-        {% set framework_suffix = 'pytorch' if cookiecutter.framework in ['pytorch', 'pytorch lightning'] else 'tf' if cookiecutter.framework == 'tensorflow' else 'ds' %}
+        {% set framework_suffix = 'pt' if cookiecutter.framework in ['pytorch', 'pytorch lightning'] else 'tf' if cookiecutter.framework == 'tensorflow' else 'ds' %}
         Dockerfile.jupyter-{{ compute_platform }}-{{ framework_suffix }}
     container_name: jupyter
     ports:
