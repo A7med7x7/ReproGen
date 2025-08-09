@@ -16,18 +16,15 @@ S3_SECRET_ACCESS_KEY=$(grep -A5 "\[$REMOTE_NAME\]" "$RCLONE_CONF" | grep "secret
 S3_ENDPOINT_URL=$(grep -A5 "\[$REMOTE_NAME\]" "$RCLONE_CONF" | grep "endpoint" | cut -d '=' -f2 | xargs)
 
 # Hugging Face token 
-echo -n "🔐 Enter your Hugging Face token (will not be displayed): "
-read -s HF_TOKEN
-echo
+
 
 # Get public IP
 HOST_IP=$(curl -s ifconfig.me)
 
 # Set constant values 
 PROJECT_NAME="{{ cookiecutter.project_name }}"
-{% if cookiecutter.hf_token == 'yes' %}
 HF_TOKEN="{{ cookiecutter.hf_token_value }}"
-{% endif %}
+
 # Creating .env file
 {
   echo "S3_ACCESS_KEY=${S3_ACCESS_KEY}"
