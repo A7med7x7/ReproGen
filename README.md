@@ -1,4 +1,24 @@
-# ML Environment on Chameleon Cloud
+# ReproGen: A Template Generator for Reproducible Machine Learning Projects on Chameleon Cloud
+
+## How to use this template generator to create a new template
+
+Use this template generator when you are ready to start a machine learning project on Chameleon Cloud, or if you want to integrate reproducible experiment tracking into your existing project.
+
+To use it:
+
+* Install [cookiecutter](https://github.com/cookiecutter/cookiecutter)
+* Run:
+
+```
+cookiecutter https://github.com/A7med7x7/ReproGen.git --checkout resource-management 
+```
+
+
+* Answer a few questions
+
+Then, you're read to use your new project!
+
+## Using your template
 
 This repository automates setting up buckets, spinning up VMs and launching a fully configured Jupyter environment with MLFlow tracking server system.
 
@@ -90,3 +110,9 @@ When finished, delete your server to free up resources.
 **In Chameleon JupyterHub, open and run:**
 
 - [`chi/2_delete_resources.ipynb`](chi/2_delete_resources.ipynb)
+
+#### Acknowledgements
+
+This project was supported by the 2025 [Summer of Reproducibility](https://ucsc-ospo.github.io/sor/).
+
+Contributors: [Ahmed Alghali](https://ucsc-ospo.github.io/author/ahmed-alghali/), [Mohamed Saeed](https://ucsc-ospo.github.io/author/mohamed-saeed/), [Fraida Fund](https://ucsc-ospo.github.io/author/fraida-fund/).
