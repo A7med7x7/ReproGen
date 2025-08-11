@@ -18,36 +18,36 @@ cookiecutter https://github.com/A7med7x7/ReproGen.git --checkout resource-manage
 
 Then, you're read to use your new project!
 
-## Using your template
+## Provisioning resources on Chameleon Cloud
 
-This repository automates setting up buckets, spinning up VMs and launching a fully configured Jupyter environment with MLFlow tracking server system.
+The `chi` directory in your newly created project automates setting up data buckets, bringing up compute instances, and launching a fully configured Jupyter environment with MLFlow experiment tracking for your machine learning experiments.
 
-### 0. Prerequisites
-- You must have a working [Chameleon Cloud](https://chameleoncloud.org) account.
-- You have already reserved a lease on Chameleon Cloud that includes a GPU-enabled bare metal node
+In [Chameleon JupyterHub](https://jupyter.chameleoncloud.org/hub/), clone your new project and open the `chi` directory.
 
-### 1. Create S3 Buckets
+### Prerequisites
 
-Run the notebook `0_create_buckets.ipynb` to create S3-compatible buckets for datasets, metrics, and artifacts. to live beyond your instance lifetime.
+You must have a [Chameleon Cloud](https://chameleoncloud.org) account, and an allocation as part of a project. You should have already configured SSH keys at the Chameleon site that you plan to use, e.g. following [Hello, Chameleon](https://teaching-on-testbeds.github.io/hello-chameleon/).
 
-**In [Chameleon JupyterHub](https://jupyter.chameleoncloud.org/hub/), open and run:**
+### First run only: Create object store buckets
 
-- [`chi/0_create_buckets.ipynb`](chi/0_create_buckets.ipynb)
+At the beginning of your project, you will create buckets in Chameleon's object store, to hold datasets, metrics, and artifacts from experiment runs. Unlike data saved to the ephemeral local disk of the compute instance, this data will persist beyond the lifetime of the compute instance.
 
----
+Inside the `chi` directory, run the notebook `0_create_buckets.ipynb` to create these buckets.
 
-### 2. Launch and Set Up the Server
+### Launching a compute instance
 
-Provision your server and configure it for your project.
+When you need to work on your project, you will launch a compute instance on Chameleon Cloud.
 
-**In [Chameleon JupyterHub](https://jupyter.chameleoncloud.org/hub/), open and run:**
+First, you will reserve an instance. Use your project name as a prefix for your lease name.
+
+Then, to provision your server and configure it for your project, you will run:
 
 - For NVIDIA: [`chi/1_create_server_nvidia.ipynb`](chi/1_create_server_nvidia.ipynb)
 - For AMD:  [`chi/1_create_server_amd.ipynb`](chi/1_create_server_amd.ipynb)
 
 ---
 
-### 3. Generate Environment Variables
+### Configure and start your Jupyter environment
 
 On your computer instance (SSH-ing from your local machine via shell), generate the `.env` file required for Docker Compose:
 From your **home directory** (`~`), run:
@@ -63,8 +63,6 @@ you should see something like:
 
 ---
 
-### 4. Start the Containarized Environment
-
 From your **home directory** (`~`), run:
 
 ```sh
@@ -73,9 +71,9 @@ docker compose --env-file ~/.env -f ReproGen/docker/docker-compose.yml up -d --b
 
 ---
 
-### 5. Login to Jupyter Lab and MLFlow UI
+### Login to Jupyter Lab and MLFlow UI
 
-1. Access your jupyter lab at:  `<HOST_IP>:8888` you can grap the token from running image using the command:
+1. Access your jupyter lab at:  `<HOST_IP>:8888` you can grab the token from running image using the command:
 
 ```sh
 docker logs jupyter 2>&1 | grep -oE "http://127.0.0.1:8888[^ ]*token=[^ ]*"
@@ -91,7 +89,11 @@ Follow the intstructions to authenticate.
 
 2. Access MLFlow UI at `<HOST_IP>:8000`
 
+### Use the environment
+
+
 ### 5.5. Stop the Containerized Environment
+
 If you’d like to pause your environment, you can stop the running containers with the command:
 
 ```sh
