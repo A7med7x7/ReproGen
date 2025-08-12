@@ -1,0 +1,59 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "83bec1ba",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Importing Libraries\n",
+    "import mlflow\n",
+    "import mlflow.sklearn\n",
+    "from utils.mlflow_log import log_git"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "b81c056c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Automatically track sklearn model, environment, params and metrics\n",
+    "mlflow.sklearn.autolog()\n",
+    "\n",
+    "# Start an experiment and assign it a name\n",
+    "mlflow.set_experiment(\"your-experiment-name\")\n",
+    "\n",
+    "# Start MLflow run\n",
+    "with mlflow.start_run(tags={\"mlflow.user\": \"{{ author_name }}\"},log_system_metrics=True) as run:\n",
+    "    # Log Git and Python info\n",
+    "    log_git()\n",
+    "\n",
+    "\n",
+    "    # - You can now...\n",
+    "    # - Load data\n",
+    "    # - Define your sklearn model\n",
+    "    # - Train a model\n",
+    "    # - Evaluate \n",
+    "\n",
+    "    \n",
+    "    pass  "
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "pytorchenv",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "name": "python",
+   "version": "3.7.12"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

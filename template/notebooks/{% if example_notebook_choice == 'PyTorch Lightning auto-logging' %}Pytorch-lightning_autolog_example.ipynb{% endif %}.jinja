@@ -1,0 +1,64 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "457cf636",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import mlflow\n",
+    "import mlflow.pytorch\n",
+    "import pytorch_lightning as pl\n",
+    "from pytorch_lightning.loggers import MLFlowLogger\n",
+    "from utils.mlflow_log import log_git, log_gpu\n",
+    "\n",
+    "# Start an experiment and assign it a name\n",
+    "EXPERIMENT_NAME = \"your-experiment-name\"\n",
+    "mlflow.set_experiment(EXPERIMENT_NAME)\n",
+    "\n",
+    "# Start MLflow run\n",
+    "with mlflow.start_run(tags={\"mlflow.user\": \"{{ author_name }}\"},log_system_metrics=True) as run:\n",
+    "    # Log Git and Python info\n",
+    "    log_git()\n",
+    "    log_gpu()\n",
+    "\n",
+    "    # Log your training configuration (dict)\n",
+    "    mlflow.log_params(config)\n",
+    "\n",
+    "    # Setup MLflowLogger for Lightning\n",
+    "    mlf_logger = MLFlowLogger(\n",
+    "        experiment_name=EXPERIMENT_NAME,\n",
+    "        tracking_uri=mlflow.get_tracking_uri(),\n",
+    "        run_id=run.info.run_id,\n",
+    "        log_model=False,  # we will log the model manually below\n",
+    "    )\n",
+    "\n",
+    "    # - Instantiate model and datamodule\n",
+    "    # - model = YourLightningModule(config)\n",
+    "    # - datamodule = YourDataModule\n",
+    "\n",
+    "    trainer = pl.Trainer(\n",
+    "        max_epochs=10,\n",
+    "        logger=mlf_logger,\n",
+    "        enable_model_summary=True,\n",
+    "    )\n",
+    "\n",
+    "    # trainer.fit(model=model, datamodule=datamodule)\n",
+    "\n",
+    "    # save the final model\n",
+    "    mlflow.pytorch.log_model(\n",
+    "        model, # replace with your model instance\n",
+    "        name=\"model\"\n",
+    "    )"
+   ]
+  }
+ ],
+ "metadata": {
+  "language_info": {
+   "name": "python"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

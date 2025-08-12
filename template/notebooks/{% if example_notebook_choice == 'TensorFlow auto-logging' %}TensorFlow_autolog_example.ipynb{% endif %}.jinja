@@ -1,0 +1,48 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "137ac365",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import tensorflow as tf\n",
+    "import mlflow\n",
+    "import mlflow.tensorflow\n",
+    "from utils.mlflow_log import log_git, log_gpu\n",
+    "\n",
+    "# - Define model\n",
+    "# - Criterion and loss\n",
+    "# Start an experiment and assign it a name\n",
+    "mlflow.tensorflow.autolog()\n",
+    "mlflow.set_experiment(\"your-experiment-name\")\n",
+    "\n",
+    "# Start MLflow run\n",
+    "with mlflow.start_run(tags={\"mlflow.user\": \"{{ author_name }}\"},log_system_metrics=True)as run:\n",
+    "    mlflow.log_param(\"optimizer\", \"adam\")\n",
+    "    # Log Git and Python info\n",
+    "    log_git()\n",
+    "    log_gpu()\n",
+    "    \n",
+    "    # - data\n",
+    "    \n",
+    "    model.fit()\n",
+    "    # - Log final loss manually\n",
+    "    # - Log model\n",
+    "    # - log metrics\n",
+    "    mlflow.log_metric(\"loss\", final_loss)\n",
+    "\n",
+    "    # - Log model\n",
+    "    mlflow.log_artifacts(\"model_tf\", name=\"model\")"
+   ]
+  }
+ ],
+ "metadata": {
+  "language_info": {
+   "name": "python"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
