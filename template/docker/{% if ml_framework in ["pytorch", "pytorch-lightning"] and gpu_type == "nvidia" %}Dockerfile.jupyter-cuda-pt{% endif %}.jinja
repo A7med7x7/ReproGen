@@ -16,11 +16,12 @@ USER ${NB_UID}
 # Install psutil for system metrics
 RUN pip install --no-cache-dir psutil    
 
+{% if ml_framework == "pytorch-lightning" %}
 # Install Lightning
 RUN pip install --pre --no-cache-dir lightning && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
-
+{% endif %}
 # Install MLFlow and pynvml 
 RUN pip install --pre --no-cache-dir pynvml && \
     pip install --pre --no-cache-dir mlflow && \
