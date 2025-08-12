@@ -95,13 +95,20 @@
    "id": "8b64b31f",
    "metadata": {},
    "source": [
-    "### Next Step: Launch a GPU Server\n",
+    "### You can check your buckets in Horizon GUI\n",
     "\n",
-    "To proceed with setting up a server:\n",
+    "Now that your S3 buckets are created, you can verify them in the Chameleon Horizon interface.\n",
     "\n",
-    "- For NVIDIA: [`chi/1_create_server_nvidia.ipynb`](chi/1_create_server_nvidia.ipynb)\n",
-    "- For AMD:  [`chi/1_create_server_amd.ipynb`](chi/1_create_server_amd.ipynb)\n"
+    "1. Log in to [Chameleon Horizon](https://chi.{% if bucket_site == 'CHI@TACC' %}tacc{% elif bucket_site == 'CHI@UC' %}uc{% elif bucket_site == 'auto' and chameleon_site == 'CHI@UC' %}uc{% else %}tacc{% endif %}.chameleoncloud.org)\n",
+    "2. In the left-hand menu, go to **Project → Object Store → Containers**.\n",
+    "3. You should see the buckets you just created here."
    ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3dfde0ad",
+   "metadata": {},
+   "source": []
   }
  ],
  "metadata": {
