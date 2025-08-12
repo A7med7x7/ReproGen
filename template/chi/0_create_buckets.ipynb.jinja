@@ -1,0 +1,128 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "1d0077a0",
+   "metadata": {},
+   "source": [
+    "## Create Object store continairs (S3 buckets) \n",
+    "we will use S3-compatible buckets to store our:\n",
+    "\n",
+    "  - `{{ project_name }}-data`: for datasets\n",
+    "  - `{{ project_name }}-mlflow-metrics`: for metrics, logs\n",
+    "  - `{{ project_name }}-mlflow-artifacts`: for model checkpoints, images, etc.\n",
+    "\n",
+    "> These buckets will be used in later notebooks for data storage and experiment tracking and will be mounted to your localfilesystem when configuring your server via a notebook.\n",
+    "\n",
+    "The notebook cells uses [swiftclient](https://docs.openstack.org/python-swiftclient/latest/) + [python-chi](https://python-chi.readthedocs.io/en/latest/index.html) \n",
+    "to automate object store bucket creation on Chameleon\n",
+    "\n",
+    "###  Prerequisites\n",
+    "- This notebook assumes that You must be logged into Chameleon JupyterHub and you run the following cells there ."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "b65f8733-0972-4367-b1b4-eef297aa1ff0",
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "#Import required packages\n",
+    "import chi\n",
+    "import swiftclient\n",
+    "from chi import context"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "ab5c2d91-a18d-4d36-b3cc-1c37bc6ff7d2",
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "project_name = \"{{ project_name }}\" # Define project name (this will prefix the bucket names)\n",
+    "context.choose_project()\n",
+    "context.choose_site(default=\"{{ chameleon_site }}\") # Select your Chameleon Cloud project and site"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "8d98e4d4-3aad-4eda-bad8-dab18272334c",
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "# Authenticate - getting object store endpoint\n",
+    "os_conn = chi.clients.connection()\n",
+    "token = os_conn.authorize()\n",
+    "storage_url = os_conn.object_store.get_endpoint()\n",
+    "# Connect to Swift (S3-compatible) object store\n",
+    "swift_conn = swiftclient.Connection(preauthurl=storage_url,\n",
+    "                                    preauthtoken=token,\n",
+    "                                    retries=5)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "ebd9979d-42fa-439d-b458-cc9f9aeb6045",
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "# List of buckets to create\n",
+    "buckets = [\n",
+    "    f\"{project_name}-data\",\n",
+    "    f\"{project_name}-mlflow-metrics\",\n",
+    "    f\"{project_name}-mlflow-artifacts\"\n",
+    "]\n",
+    "# Creating buckets\n",
+    "for bucket in buckets:\n",
+    "    print(f\"Creating bucket: {bucket}\")\n",
+    "    swift_conn.put_container(bucket)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "8b64b31f",
+   "metadata": {},
+   "source": [
+    "### Next Step: Launch a GPU Server\n",
+    "\n",
+    "To proceed with setting up a server:\n",
+    "\n",
+    "- For NVIDIA: [`chi/1_create_server_nvidia.ipynb`](chi/1_create_server_nvidia.ipynb)\n",
+    "- For AMD:  [`chi/1_create_server_amd.ipynb`](chi/1_create_server_amd.ipynb)\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.9"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
