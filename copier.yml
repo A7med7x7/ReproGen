@@ -10,8 +10,8 @@ _envops:
 
 
 _metadata:
-  name: "Chameleon Cloud ML Environment"
-  description: "Scaffold ML projects for Chameleon Cloud with GPU support, MLflow tracking, and containerized environments"
+  name: "ReproGen"
+  description: "ReproGen: A Template Generator for Reproducible Machine Learning Projects on Chameleon Cloud"
   version: "1.0.0"
   author: "cc_team"
   license: "MIT"
@@ -47,6 +47,11 @@ project_name:
     When creating a lease using Chameleon Cloud UI , 
     use this project name as the prefix for your lease name.
     Example: "mltrain-project-gpu-lease"
+  validator: >-
+    {% if not (project_name | regex_search('^[a-z][a-z0-9-]{1,}$')) %}
+    Project name must start with a lowercase letter and contain only lowercase letters, 
+    numbers, or hyphens (no spaces).
+    {% endif %}
 
 author_name:
   type: str
@@ -61,8 +66,10 @@ repo_url:
     Recommendation:
       1. Create a GitHub repo named exactly after your project_name.
       2. Paste the HTTPS URL here (e.g., https://github.com/yourname/project-name).
-
-# RESOURCE MANAGEMENT QUESTIONS (conditional on workflow)
+  validator: >-
+    {% if repo_url and not (repo_url | regex_search('^https://github.com/[^/]+/[^/]+$')) %}
+    Must be a valid HTTPS GitHub repository URL (e.g., https://github.com/yourname/repo-name).
+    {% endif %}
 
 chameleon_site:
   type: str
@@ -76,6 +83,7 @@ chameleon_site:
     - CHI@TACC: Texas Advanced Computing Center (most GPU nodes)
     - CHI@UC: University of Chicago
     - KVM@TACC: Texas Advanced Computing Center (virtual machine nodes)
+    
 bucket_site:
   type: str
   choices:
@@ -105,8 +113,6 @@ gpu_type:
     - amd: For AMD GPU nodes
     - any: No preference — use whichever GPU type is available
     - cpu: CPU-only nodes (no GPU, good for classical ML or lightweight workloads)
-
-# ENVIRONMENT SETUP QUESTIONS (conditional on workflow)
 
 ml_framework:
   type: str
@@ -156,3 +162,4 @@ example_notebook_choice:
     - PyTorch Lightning auto-logging
     - Sklearn auto-logging
     - TensorFlow auto-logging
+  when: "{{ include_example_notebooks }}"
