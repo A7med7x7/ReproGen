@@ -1,0 +1,158 @@
+# The template root is found here
+_subdirectory: template
+_envops:
+  block_start_string: "{%"
+  block_end_string: "%}"
+  variable_start_string: "{{"  
+  variable_end_string: "}}"
+  comment_start_string: "{#"
+  comment_end_string: "#}"
+
+
+_metadata:
+  name: "Chameleon Cloud ML Environment"
+  description: "Scaffold ML projects for Chameleon Cloud with GPU support, MLflow tracking, and containerized environments"
+  version: "1.0.0"
+  author: "cc_team"
+  license: "MIT"
+  homepage: "https://github.com/a7med7x7/ReproGen"
+  repository: "https://github.com/a7med7x7/ReproGen"
+  
+# Skip overwriting existing files (user can force with --force)
+_skip_if_exists:
+  - "*.ipynb"
+  - "requirements.txt"
+  - ".env"
+  - "src/**"
+
+# Files to exclude from template rendering (copy as-is)
+_templates_suffix_to_ignore:
+  - ".jpg"
+  - ".png" 
+  - ".gif"
+  - ".ico"
+  - ".pdf"
+  - ".zip"
+  - ".tar.gz"
+
+__skip_answered: false
+  # PROJECT CONFIGURATION
+project_name:
+  type: str
+  default: mltrain-project
+  help: |
+    Project name that will be used for:
+    - S3 bucket prefixes (e.g., project-name-data, project-name-mlflow-metrics)
+    - Resource and experiment naming conventions
+    When creating a lease using Chameleon Cloud UI , 
+    use this project name as the prefix for your lease name.
+    Example: "mltrain-project-gpu-lease"
+
+author_name:
+  type: str
+  default: CC
+  help: Your name or organization/team for the project
+
+repo_url:
+  type: str
+  default: ""
+  help: |
+    GitHub repository URL for your project.
+    Recommendation:
+      1. Create a GitHub repo named exactly after your project_name.
+      2. Paste the HTTPS URL here (e.g., https://github.com/yourname/project-name).
+
+# RESOURCE MANAGEMENT QUESTIONS (conditional on workflow)
+
+chameleon_site:
+  type: str
+  choices:
+    - CHI@TACC
+    - CHI@UC
+    - KVM@TACC
+  default: CHI@TACC
+  help: |
+    Select the site where you want your resources to run:
+    - CHI@TACC: Texas Advanced Computing Center (most GPU nodes)
+    - CHI@UC: University of Chicago
+    - KVM@TACC: Texas Advanced Computing Center (virtual machine nodes)
+bucket_site:
+  type: str
+  choices:
+    - CHI@TACC
+    - CHI@UC
+    - auto
+  default: auto
+  help: |
+    Location for storing your S3 data buckets:
+    - CHI@TACC: Texas Advanced Computing Center
+    - CHI@UC: University of Chicago
+    - auto: We'll pick the optimal site for you
+
+    Tip: If you're not sure, choose "auto" — it works for most users.
+
+gpu_type:
+  type: str
+  choices:
+    - nvidia    
+    - amd       
+    - any       
+    - cpu       
+  default: any
+  help: |
+    GPU type you plan to use for your lease:
+    - nvidia: For NVIDIA GPU nodes
+    - amd: For AMD GPU nodes
+    - any: No preference — use whichever GPU type is available
+    - cpu: CPU-only nodes (no GPU, good for classical ML or lightweight workloads)
+
+# ENVIRONMENT SETUP QUESTIONS (conditional on workflow)
+
+ml_framework:
+  type: str
+  choices:
+    - pytorch
+    - tensorflow
+    - data-science
+    - pytorch-lightning
+  default: pytorch
+  help: |
+    Primary ML framework for your environment:
+    - pytorch: PyTorch with GPU support
+    - tensorflow: TensorFlow with GPU support
+    - data-science: General data science stack (pandas, sklearn, etc.)
+
+cuda_version:
+  type: str
+  help: "What CUDA version you plan to use with your Jupyter image (more recent: cuda-12, older legacy GPU compatibility: cuda-11)"
+  choices:
+    - cuda11-latest
+    - cuda12-latest
+  when: "{{ (ml_framework == 'pytorch') }}"
+
+include_huggingface:
+  type: bool
+  default: true
+  help: |
+    Enable Hugging Face integration?
+    This will set up your containerized environment so you can download and use
+    models directly from the Hugging Face Hub.
+
+include_example_notebooks:
+  type: bool
+  default: true
+  help: |
+    Include example ML notebooks showing:
+    - PyTorch manual logging with MLflow
+    - PyTorch Lightning auto-logging
+    - Sklearn auto-logging
+    - TensorFlow auto-logging
+
+example_notebook_choice:
+  type: str
+  help: "Select the example ML notebook type to include"
+  choices:
+    - PyTorch manual logging
+    - PyTorch Lightning auto-logging
+    - Sklearn auto-logging
+    - TensorFlow auto-logging
