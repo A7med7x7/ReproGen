@@ -4,11 +4,11 @@ services:
     build:
       context: .
       dockerfile: >-
-        {% if ml_framework in["pytorch" ,"pytorch-lightning"] and gpu_type == "nvidia" %}
+        {% if ml_framework in["pytorch" ,"pytorch-lightning"] and gpu_type in ["nvidia","any"] %}
         Dockerfile.jupyter-cuda-pt
         {% elif ml_framework == "pytorch" and gpu_type == "amd" %}
         Dockerfile.jupyter-rocm-pt
-        {% elif ml_framework == "tensorflow" and gpu_type == "nvidia" %}
+        {% elif ml_framework == "tensorflow" and gpu_type in ["nvidia","any"] %}
         Dockerfile.jupyter-cuda-tf
         {% elif ml_framework == "tensorflow" and gpu_type == "amd" %}
         Dockerfile.jupyter-rocm-tf
@@ -29,7 +29,7 @@ services:
       - JUPYTER_ENABLE_LAB=yes
       - PYTHONPATH=/home/jovyan/work/
       - MLFLOW_TRACKING_URI=http://mlflow:8000
-    {% if gpu_type == "nvidia" %}
+    {% if gpu_type in ["nvidia", "any"] %}
     runtime: nvidia
     {% elif gpu_type == "amd" %}
     runtime: rocm
