@@ -92,7 +92,7 @@
    "source": [
     "username = os.getenv('USER') # all exp resources will have this prefix\n",
     "s = server.Server(\n",
-    "    f\"node-mltrain-{username}\", \n",
+    "    f\"node-{{ project_name }}-{username}\", \n",
     "    reservation_id=l.node_reservations[0][\"id\"],\n",
     "    image_name=\"CC-Ubuntu24.04-CUDA\"\n",
     ")\n",
