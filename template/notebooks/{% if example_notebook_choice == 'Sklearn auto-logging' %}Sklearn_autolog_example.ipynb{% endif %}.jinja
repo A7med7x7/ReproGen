@@ -24,7 +24,7 @@
     "mlflow.sklearn.autolog()\n",
     "\n",
     "# Start an experiment and assign it a name\n",
-    "mlflow.set_experiment(\"your-experiment-name\")\n",
+    "mlflow.set_experiment(\"{{ project_name }}\")\n",
     "\n",
     "# Start MLflow run\n",
     "with mlflow.start_run(tags={\"mlflow.user\": \"{{ author_name }}\"},log_system_metrics=True) as run:\n",

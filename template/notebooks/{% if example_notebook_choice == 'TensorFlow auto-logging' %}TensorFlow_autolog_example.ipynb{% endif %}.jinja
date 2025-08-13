@@ -3,20 +3,28 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "137ac365",
+   "id": "df8d5b35",
    "metadata": {},
    "outputs": [],
    "source": [
     "import tensorflow as tf\n",
     "import mlflow\n",
     "import mlflow.tensorflow\n",
-    "from utils.mlflow_log import log_git, log_gpu\n",
-    "\n",
+    "from utils.mlflow_log import log_git, log_gpu\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "137ac365",
+   "metadata": {},
+   "outputs": [],
+   "source": [
     "# - Define model\n",
     "# - Criterion and loss\n",
     "# Start an experiment and assign it a name\n",
     "mlflow.tensorflow.autolog()\n",
-    "mlflow.set_experiment(\"your-experiment-name\")\n",
+    "mlflow.set_experiment(\"{{ project_name }}\")\n",
     "\n",
     "# Start MLflow run\n",
     "with mlflow.start_run(tags={\"mlflow.user\": \"{{ author_name }}\"},log_system_metrics=True)as run:\n",

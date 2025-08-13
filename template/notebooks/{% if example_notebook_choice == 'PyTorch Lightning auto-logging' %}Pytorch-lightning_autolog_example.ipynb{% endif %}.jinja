@@ -14,7 +14,7 @@
     "from utils.mlflow_log import log_git, log_gpu\n",
     "\n",
     "# Start an experiment and assign it a name\n",
-    "EXPERIMENT_NAME = \"your-experiment-name\"\n",
+    "EXPERIMENT_NAME = \"{{ project_name }}\"\n",
     "mlflow.set_experiment(EXPERIMENT_NAME)\n",
     "\n",
     "# Start MLflow run\n",
