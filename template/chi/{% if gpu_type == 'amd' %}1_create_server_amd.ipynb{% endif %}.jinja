@@ -42,7 +42,20 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "lease_name = \"{{ lease_name }}\""
+    "project_name = \"{{ project_name }}\"\n",
+    "\n",
+    "# Get all leases\n",
+    "leases = lease.list_leases()\n",
+    "matching_leases = [\n",
+    "    lease for lease in leases\n",
+    "    if lease.name.startswith(project_name) and lease.status.upper() == \"ACTIVE\"\n",
+    "]\n",
+    "\n",
+    "if not matching_leases:\n",
+    "    raise ValueError(f\"No active lease found starting with '{project_name}'\")\n",
+    "\n",
+    "active_lease = matching_leases[0]\n",
+    "active_lease.show()"
    ]
   },
   {
@@ -51,6 +64,7 @@
    "metadata": {},
    "outputs": [],
    "source": [
+    "lease_name = active_lease.name\n",
     "l = lease.get_lease(lease_name) \n",
     "l.show()"
    ]
@@ -356,8 +370,6 @@
    "outputs": [],
    "source": [
     "# Mounting the buckets using rclone \n",
-    "\n",
-    "project_name= '{{ project_name }}'\n",
     "buckets = {\n",
     "    f'{project_name}-data': 'data',\n",
     "    f'{project_name}-mlflow-metrics': 'metrics'\n",
