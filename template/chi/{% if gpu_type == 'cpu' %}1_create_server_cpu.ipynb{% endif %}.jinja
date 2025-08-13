@@ -34,7 +34,15 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "Change the string in the following cell to reflect the name of *your* lease, then run it to get your lease:"
+    "## Select Active Lease\n",
+    "\n",
+    "\n",
+    "In the previous steps (when setting up your project template)\n",
+    "we hightlights that you to name your lease starting with your project name (e.g., {{ project_name }}-gpu-test).\n",
+    "This naming, because the code below searches for your active lease by looking for:\n",
+    "\n",
+    "A lease whose name starts with {{ project_name }}\n",
+    "A lease whose status is \"ACTIVE\""
    ]
   },
   {
@@ -43,7 +51,20 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "lease_name = \"{{ lease_name }}\""
+    "project_name = \"{{ project_name }}\"\n",
+    "\n",
+    "# Get all leases\n",
+    "leases = lease.list_leases()\n",
+    "matching_leases = [\n",
+    "    lease for lease in leases\n",
+    "    if lease.name.startswith(project_name) and lease.status.upper() == \"ACTIVE\"\n",
+    "]\n",
+    "\n",
+    "if not matching_leases:\n",
+    "    raise ValueError(f\"No active lease found starting with '{project_name}'\")\n",
+    "\n",
+    "active_lease = matching_leases[0]\n",
+    "active_lease.show()"
    ]
   },
   {
@@ -52,6 +73,7 @@
    "metadata": {},
    "outputs": [],
    "source": [
+    "lease_name = active_lease.name\n",
     "l = lease.get_lease(lease_name) \n",
     "l.show()"
    ]
