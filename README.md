@@ -16,8 +16,8 @@
 ###  Requirements
 
 - [Chameleon Cloud account](https://www.chameleoncloud.org)
-- **Python** ≥ 3.8
-- **Copier** ≥ 9.0
+- **[Python](https://www.python.org/downloads/)** ≥ 3.8
+- **[Copier](https://copier.readthedocs.io/en/stable/)** ≥ 9.0
 
 ---
 
@@ -36,11 +36,11 @@ pipx install copier
 
 ---
 
-## QUick Start
+## Quick Start
 
 Create a New Project with 
 ```sh
-copier copy --vcs-ref dev https://github.com/A7med7x7/chamelab-cli.git my_project_name
+copier copy --vcs-ref dev https://github.com/A7med7x7/reprogen.git my_project_name
 ```
 * Answer a few questions
 
