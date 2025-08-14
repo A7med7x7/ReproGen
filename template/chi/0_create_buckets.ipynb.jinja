@@ -46,8 +46,8 @@
    "outputs": [],
    "source": [
     "project_name = \"{{ project_name }}\" # Define project name (this will prefix the bucket names)\n",
-    "context.choose_project()\n",
-    "context.choose_site(default=\"{{ bucket_site }}\") # Select your Chameleon Cloud project and site"
+    "context.choose_project() \n",
+    "context.choose_site(default=\"{% if bucket_site == 'auto' and chameleon_site != 'KVM@TACC' %}{{ chameleon_site }}{% elif bucket_site == 'auto' %}CHI@TACC{% else %}{{ bucket_site }}{% endif %}\")"
    ]
   },
   {
