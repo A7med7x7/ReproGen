@@ -7,6 +7,11 @@ Use this template generator when you are ready to start a machine learning proje
 To use it:
 
 * Install [cookiecutter](https://github.com/cookiecutter/cookiecutter)
+
+```
+pip install cookiecutter
+```
+
 * Run:
 
 ```
