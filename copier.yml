@@ -138,7 +138,7 @@ cuda_version:
   choices:
     - cuda11-latest
     - cuda12-latest
-  when: "{{ (ml_framework == 'pytorch') }}"
+  when: "{{ (ml_framework == 'pytorch' and gpu_type=='amd') }}"
 
 include_huggingface:
   type: bool
