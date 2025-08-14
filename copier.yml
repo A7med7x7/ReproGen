@@ -79,11 +79,15 @@ chameleon_site:
     - KVM@TACC
   default: CHI@TACC
   help: |
-    Select the site where you want your resources to run:
-    - CHI@TACC: Texas Advanced Computing Center (most GPU nodes)
+    Select the site where you want your compute resources(VMs or bare metal) to run.
+    This choice does not control where your S3 data buckets are stored — 
+    bucket storage location is set separately using the bucket_site option.
+
+    Sites:
+    - CHI@TACC: Texas Advanced Computing Center (most GPU bare metal nodes)
     - CHI@UC: University of Chicago
     - KVM@TACC: Texas Advanced Computing Center (virtual machine nodes)
-    
+
 bucket_site:
   type: str
   choices:
