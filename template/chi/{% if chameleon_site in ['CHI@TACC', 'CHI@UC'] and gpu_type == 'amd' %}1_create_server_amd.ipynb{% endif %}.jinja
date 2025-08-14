@@ -1,0 +1,447 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Launch and set up AMD bare metal server - with python-chi\n",
+    "\n",
+    "At the beginning of the lease time, we will bring up our GPU server. We will use the `python-chi` Python API to Chameleon to provision our server.\n",
+    "\n",
+    "Run the following cells, and make sure the correct site and project are selected:\n",
+    "\n",
+    "###  Prerequisites\n",
+    "- This notebook assumes that You must be logged into Chameleon JupyterHub and you run the following cells there.\n",
+    "- You have already reserved a lease on Chameleon Cloud that includes a GPU-enabled bare metal node (such as gpu_mi100)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from chi import server, context, lease\n",
+    "import os, time\n",
+    "\n",
+    "context.version = \"1.0\" \n",
+    "context.choose_project()\n",
+    "context.choose_site(default=\"{{ chameleon_site }}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Select Active Lease\n",
+    "\n",
+    "\n",
+    "In the previous steps (when setting up your project template)\n",
+    "we hightlights that you to name your lease starting with your project name (e.g., {{ project_name }}-gpu-test).\n",
+    "This naming, because the code below searches for your active lease by looking for:\n",
+    "\n",
+    "A lease whose name starts with {{ project_name }}\n",
+    "A lease whose status is \"ACTIVE\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "project_name = \"{{ project_name }}\"\n",
+    "\n",
+    "# Get all leases\n",
+    "leases = lease.list_leases()\n",
+    "matching_leases = [\n",
+    "    lease for lease in leases\n",
+    "    if lease.name.startswith(project_name) and lease.status.upper() == \"ACTIVE\"\n",
+    "]\n",
+    "\n",
+    "if not matching_leases:\n",
+    "    raise ValueError(f\"No active lease found starting with '{project_name}'\")\n",
+    "\n",
+    "active_lease = matching_leases[0]\n",
+    "active_lease.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "lease_name = active_lease.name\n",
+    "l = lease.get_lease(lease_name) \n",
+    "l.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The status should show as “ACTIVE” now that we are past the lease start time.\n",
+    "\n",
+    "The rest of this notebook can be executed without any interactions from you, so at this point, you can save time by clicking on this cell, then selecting “Run” \\> “Run Selected Cell and All Below” from the Jupyter menu.\n",
+    "\n",
+    "As the notebook executes, monitor its progress to make sure it does not get stuck on any execution error, and also to see what it is doing!"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We will use the lease to bring up a server with the `CC-Ubuntu24.04-ROCm` disk image. (The default Ubuntu 24.04 kernel is not compatible with the AMD GPU on these nodes.)\n",
+    "\n",
+    "> **Note**: the following cell brings up a server only if you don’t already have one with the same name! (Regardless of its error state.) If you have a server in ERROR state already, delete it first in the Horizon GUI before you run this cell."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "username = os.getenv('USER') # all exp resources will have this prefix\n",
+    "s = server.Server(\n",
+    "    f\"node-{{ project_name }}-{username}\", \n",
+    "    reservation_id=l.node_reservations[0][\"id\"],\n",
+    "    image_name=\"CC-Ubuntu24.04-ROCm\"\n",
+    ")\n",
+    "s.submit(idempotent=True)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Note: security groups are not used at Chameleon bare metal sites, so we do not have to configure any security groups on this instance."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Associating a floating IP address \n",
+    "Then, we’ll associate a floating IP with the instance, so that we can access it over SSH."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.associate_floating_ip()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.refresh()\n",
+    "s.check_connectivity()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "In the output below, make a note of the floating IP that has been assigned to your instance (in the “Addresses” row)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.refresh()\n",
+    "s.show(type=\"widget\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Retrieve code and notebooks on the instance\n",
+    "\n",
+    "Now, we can use `python-chi` to execute commands on the instance, to set it up. We’ll start by retrieving the code and other materials on the instance."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "repo = \"{{ repo_url }}\" "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(f\"git clone {repo}\") "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Set up Docker\n",
+    "\n",
+    "To use common deep learning frameworks like Tensorflow or PyTorch, and ML training platforms like MLFlow and Ray, we can run containers that have all the prerequisite libraries necessary for these frameworks. Here, we will set up the container framework."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"curl -sSL https://get.docker.com/ | sudo sh\")\n",
+    "s.execute(\"sudo groupadd -f docker; sudo usermod -aG docker $USER\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Set up the AMD GPU\n",
+    "\n",
+    "Before we can use the AMD GPUs, we need to set up the driver using the `amdgpu-install` utility.\n",
+    "\n",
+    "Let’s follow [AMD’s instructions for setting up `amdgpu-install`](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/install-methods/amdgpu-installer/amdgpu-installer-ubuntu.html#installation):"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"sudo apt update; wget https://repo.radeon.com/amdgpu-install/6.3.3/ubuntu/noble/amdgpu-install_6.3.60303-1_all.deb\")\n",
+    "s.execute(\"sudo apt -y install ./amdgpu-install_6.3.60303-1_all.deb; sudo apt update\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "To [run containers using ROCm](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html) (Radeon Open Compute Platform), an open-source software stack from AMD that allows users to program AMD GPUs (similar to NVIDIA’s CUDA), we need to install the `amdgpu-dkms` driver:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"amdgpu-install -y --usecase=dkms\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "And, we’ll also install the `rocm-smi` utility, so that we can monitor the GPU from the host:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"sudo apt -y install rocm-smi\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Finally, we will add the `cc` user to the `video` and `render` groups, which are needed for access to the GPU:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"sudo usermod -aG video,render $USER\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "That’s all we will need on the host - the rest of ROCm will be installed inside the containers.\n",
+    "\n",
+    "To apply the changes to the kernel, we need to reboot, and wait for the server to come back up."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"sudo reboot\")\n",
+    "time.sleep(30)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.refresh()\n",
+    "s.check_connectivity()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Run"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"rocm-smi\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We can also install `nvtop` to monitor GPU usage - we’ll install from source, because the older version in the Ubuntu package repositories does not support AMD GPUs:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"sudo apt -y install cmake libncurses-dev libsystemd-dev libudev-dev libdrm-dev libgtest-dev\")\n",
+    "s.execute(\"git clone https://github.com/Syllo/nvtop\")\n",
+    "s.execute(\"mkdir -p nvtop/build && cd nvtop/build && cmake .. -DAMDGPU_SUPPORT=ON && sudo make install\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Mounting S3_buckets to filesystem"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We also need to modify the configuration file for FUSE (Filesystem in USErspace), which is the Linux interface that allows user‑space applications (instead of the kernel) to mount and manage virtual filesystems. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# this line makes sure user_allow_other is un-commented in /etc/fuse.conf\n",
+    "s.execute(\"sudo sed -i '/^#user_allow_other/s/^#//' /etc/fuse.conf\") "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Enabling the `user_allow_other` option ensures that filesystems mounted by our user (such as an object store mounted with rclone) are accessible to other users and processes, including Docker containers running Jupyter notebooks"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Mounting the buckets using rclone \n",
+    "buckets = {\n",
+    "    f'{project_name}-data': 'data',\n",
+    "    f'{project_name}-mlflow-metrics': 'metrics'\n",
+    "}\n",
+    "\n",
+    "for bucket_name, mount_dir in buckets.items():\n",
+    "    \n",
+    "    s.execute(f\"sudo mkdir -p /mnt/{mount_dir}\")\n",
+    "    s.execute(f\"sudo chown -R cc /mnt/{mount_dir}\")\n",
+    "    s.execute(f\"sudo chgrp -R cc /mnt/{mount_dir}\")\n",
+    "    s.execute(f\"rclone mount rclone_s3:{bucket_name} /mnt/{mount_dir} --allow-other --daemon\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"ls -l /mnt/\") # we should be able to see the mounted buckets"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Access over SSH"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "From your local terminal, run\n",
+    "\n",
+    "    ssh -i ~/.ssh/id_rsa_chameleon cc@A.B.C.D\n",
+    "\n",
+    "where\n",
+    "\n",
+    "-   in place of `~/.ssh/id_rsa_chameleon`, substitute the path to your own key that you had uploaded to {{ chameleon_site }}\n",
+    "-   in place of `A.B.C.D`, use the floating IP address you just associated to your instance."
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.9"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
