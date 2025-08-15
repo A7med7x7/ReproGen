@@ -3,16 +3,16 @@ services:
   jupyter:
     build:
       context: .
-      dockerfile: >-
-        {% if ml_framework in["pytorch" ,"pytorch-lightning"] and gpu_type in ["nvidia","any"] %}
+      dockerfile:
+        {% if "pytorch" in ml_framework and "nvidia" in gpu_type %}
         Dockerfile.jupyter-cuda-pt
-        {% elif ml_framework == "pytorch" and gpu_type == "amd" %}
+        {% elif "pytorch" in ml_framework and "amd" in gpu_type %}
         Dockerfile.jupyter-rocm-pt
-        {% elif ml_framework == "tensorflow" and gpu_type in ["nvidia","any"] %}
+        {% elif "tensorflow" in ml_framework and "nvidia" in gpu_type %}
         Dockerfile.jupyter-cuda-tf
-        {% elif ml_framework == "tensorflow" and gpu_type == "amd" %}
+        {% elif "tensorflow" in ml_framework and "amd" in gpu_type %}
         Dockerfile.jupyter-rocm-tf
-        {% elif ml_framework == "data-science" or gpu_type == "none" %}
+        {% elif "sklearn" in ml_framework %}
         Dockerfile.jupyter-ds
         {% else %}
         Dockerfile.jupyter-cuda-pt
@@ -29,9 +29,9 @@ services:
       - JUPYTER_ENABLE_LAB=yes
       - PYTHONPATH=/home/jovyan/work/
       - MLFLOW_TRACKING_URI=http://mlflow:8000
-    {% if gpu_type in ["nvidia", "any"] %}
+    {% if "nvidia" in gpu_type %}
     runtime: nvidia
-    {% elif gpu_type == "amd" %}
+    {% elif "amd" in gpu_type %}
     runtime: rocm
     {% endif %}
     restart: always 
@@ -50,7 +50,9 @@ services:
       - AWS_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
       - AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED
       - AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED  
+      {% if include_huggingface %}
       - HF_TOKEN=${HF_TOKEN}
+      {% endif %}
     volumes:
       - /mnt/metrics:/mlflow/mlruns 
     command:
