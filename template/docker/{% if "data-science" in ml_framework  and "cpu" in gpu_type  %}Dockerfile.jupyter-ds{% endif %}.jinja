@@ -1,4 +1,4 @@
-FROM quay.io/jupyter/pytorch-notebook:{{ cuda_version }}
+FROM quay.io/jupyter/datascience-notebook:latest
 
 USER root
 
@@ -9,22 +9,20 @@ RUN apt-get update && \
     gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
     | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
-    apt-get update && apt-get install -y gh && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    apt-get update && \
+    apt-get install -y gh && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 
 USER ${NB_UID}
+
 # Install psutil for system metrics
 RUN pip install --no-cache-dir psutil    
 
-{% if ml_framework == "pytorch-lightning" %}
-# Install Lightning
-RUN pip install --pre --no-cache-dir lightning && \
-    fix-permissions "${CONDA_DIR}" && \
-    fix-permissions "/home/${NB_USER}"
-{% endif %}
 # Install MLFlow and pynvml 
 RUN pip install --pre --no-cache-dir pynvml && \
-    pip install --pre --no-cache-dir mlflow && \
+    pip install --pre --no-cache-dir mlflow==3.0.0 && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 
