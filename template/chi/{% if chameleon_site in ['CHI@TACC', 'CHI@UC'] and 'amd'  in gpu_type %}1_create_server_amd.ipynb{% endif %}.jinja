@@ -38,10 +38,11 @@
     "\n",
     "In the previous steps (when setting up your project template)\n",
     "we hightlights that you to name your lease starting with your project name (e.g., {{ project_name }}-gpu-test).\n",
-    "This naming, because the code below searches for your active lease by looking for:\n",
+    "This naming, because the code below searches for your active lease by:\n",
     "\n",
-    "A lease whose name starts with {{ project_name }}\n",
-    "A lease whose status is \"ACTIVE\""
+    "- listing all leases starting with {{ project_name }} and \"ACTIVE\"\n",
+    "\n",
+    "after looking into into leases provide the lease name you want to select in the parameter `lease_name`"
    ]
   },
   {
@@ -51,19 +52,35 @@
    "outputs": [],
    "source": [
     "project_name = \"{{ project_name }}\"\n",
+    "lease_name = None # replace with the lease name you want to select\n",
     "\n",
-    "# Get all leases\n",
-    "leases = lease.list_leases()\n",
-    "matching_leases = [\n",
-    "    lease for lease in leases\n",
-    "    if lease.name.startswith(project_name) and lease.status.upper() == \"ACTIVE\"\n",
-    "]\n",
+    "def get_active_lease(lease_name=None, project_name=None):\n",
+    "    \n",
+    "    leases = lease.list_leases()\n",
     "\n",
-    "if not matching_leases:\n",
-    "    raise ValueError(f\"No active lease found starting with '{project_name}'\")\n",
+    "    # retrieve exact lease name provided\n",
+    "    if lease_name:\n",
+    "        match = next((l for l in leases if l.name == lease_name), None)\n",
+    "        if not match:\n",
+    "            raise ValueError(f\"No lease found with name '{lease_name}'\")\n",
+    "        return match\n",
     "\n",
-    "active_lease = matching_leases[0]\n",
-    "active_lease.show()"
+    "    # search by project_name prefix for active leases\n",
+    "    matching = [\n",
+    "        l for l in leases\n",
+    "        if l.name.startswith(project_name) and l.status.upper() == \"ACTIVE\"\n",
+    "    ]\n",
+    "\n",
+    "    if not matching:\n",
+    "        raise ValueError(f\"No active lease found starting with '{project_name}'\")\n",
+    "\n",
+    "    if len(matching) > 1:\n",
+    "        print(\"\\nYou have multiple active leases:\")\n",
+    "        for l in matching:\n",
+    "            print(f\" - {l.name} (status: {l.status})\")\n",
+    "        raise ValueError(\"Please set 'lease_name' to pick the correct lease.\")\n",
+    "\n",
+    "    return matching[0]\n"
    ]
   },
   {
@@ -72,8 +89,8 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "lease_name = active_lease.name\n",
-    "l = lease.get_lease(lease_name) \n",
+    "l = get_active_lease(project_name, lease_name)\n",
+    "print(f\"using lease: {l.name}\")\n",
     "l.show()"
    ]
   },
