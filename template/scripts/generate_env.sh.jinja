@@ -23,15 +23,16 @@ S3_ENDPOINT_URL=$(grep -A5 "\[$REMOTE_NAME\]" "$RCLONE_CONF" | grep "endpoint" |
 HOST_IP=$(curl -s ifconfig.me)
 
 # Project configuration
-
 PROJECT_NAME="{{ project_name }}"
 {% if include_huggingface %}
-HF_TOKEN="{{ hugging_face_token }}"
+echo -n "🔐 Enter your Hugging Face token (will not be displayed): "
+read -s HF_TOKEN
+echo
 {% endif %}
+
+HF_HOME="/mnt/data/hf_cache"
 # Creating .env file
 {
-HF_HOME="/mnt/data/hf_cache"
-
   echo "S3_ACCESS_KEY=${S3_ACCESS_KEY}"
   echo "S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}"
   echo "HOST_IP=${HOST_IP}"
