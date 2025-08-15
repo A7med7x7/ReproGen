@@ -178,16 +178,8 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "repo = \"{{ repo_url }}\" "
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "s.execute(f\"git clone {repo}\") "
+    "repo = \"{{ repo_url }}\" \n",
+    "s.execute(f\"git clone {repo}  {{ project_name }}\") "
    ]
   },
   {
