@@ -37,38 +37,53 @@ _templates_suffix_to_ignore:
 
 __skip_answered: false
   # PROJECT CONFIGURATION
+
+setup_mode:
+  type: str
+  choices:
+    - Basic
+    - Advanced
+  default: Basic
+  help: |
+    Choose configuration mode:
+    - Basic: minimal options 
+    - Advanced: extra settings and flexibility
+
 project_name:
   type: str
-  default: mltrain-project
   help: |
-    Project name that will be used for:
-    - S3 bucket prefixes (e.g., project-name-data, project-name-mlflow-metrics)
-    - Resource and experiment naming conventions
-    When creating a lease using Chameleon Cloud UI , 
-    use this project name as the prefix for your lease name.
-    Example: "mltrain-project-gpu-lease"
-  validator: >-
-    {% if not (project_name | regex_search('^[a-z][a-z0-9-]{1,}$')) %}
-    Project name must start with a lowercase letter and contain only lowercase letters, 
-    numbers, or hyphens (no spaces).
-    {% endif %}
+    Project Name: A unique identifier for your project. This name will be used consistently across your setup, including:
 
-author_name:
-  type: str
-  default: CC
-  help: Your name or organization/team for the project
+    - Prefixes for S3 buckets (e.g., project-name-data`, project-name-mlflow-artifacts)  
+    - Names for compute resources (VMs or bare-metal leases) 
+
+    Rules:
+    - May include uppercase or lowercase letters, numbers, hyphen (-), and underscore (_)
+    - No spaces allowed
+  validator: >-
+    {% if not (project_name | regex_search('^[A-Za-z0-9_-]+$')) %}
+    Project name may only contain letters (A–Z, a–z), numbers (0–9), hyphen (-), and underscore (_).
+    No spaces are allowed.
+    {% endif %}
 
 repo_url:
   type: str
   default: ""
   help: |
-    GitHub repository URL for your project.
-    Recommendation:
-      1. Create a GitHub repo named exactly after your project_name.
-      2. Paste the HTTPS URL here (e.g., https://github.com/yourname/project-name).
+    Git repository URL for your generated project.
+    Recommendations:
+      1. Create a repository named exactly after your project-name it will host the generated material.
+      2. Paste the repository URL here (HTTPS or SSH).
+         Examples:
+           - HTTPS: https://github.com/yourname/project-name
+           - HTTPS: https://gitlab.com/yourname/project-name
+           - SSH: git@bitbucket.org:yourname/project-name.git
   validator: >-
-    {% if repo_url and not (repo_url | regex_search('^https://github.com/[^/]+/[^/]+$')) %}
-    Must be a valid HTTPS GitHub repository URL (e.g., https://github.com/yourname/repo-name).
+   {% if repo_url and not (repo_url | regex_search('^(https://|git@)[^/:]+[:/][^/]+/[^/]+(\.git)?$')) %}
+    Must be a valid Git repository URL (HTTPS or SSH).
+    Examples:
+      - https://github.com/yourname/repo-name
+      - git@gitlab.com:yourname/repo-name.git
     {% endif %}
 
 chameleon_site:
@@ -87,6 +102,7 @@ chameleon_site:
     - CHI@TACC: Texas Advanced Computing Center (most GPU bare metal nodes)
     - CHI@UC: University of Chicago
     - KVM@TACC: Texas Advanced Computing Center (virtual machine nodes)
+  when: "{{ setup_mode == 'Advanced' }}"
 
 bucket_site:
   type: str
@@ -94,7 +110,7 @@ bucket_site:
     - CHI@TACC
     - CHI@UC
     - auto
-  default: auto
+  default: CHI@TACC
   help: |
     Location for storing your S3 data buckets:
     - CHI@TACC: Texas Advanced Computing Center
@@ -102,21 +118,24 @@ bucket_site:
     - auto: We'll pick the optimal site for you
 
     Tip: If you're not sure, choose "auto" — it works for most users.
+  when: "{{ setup_mode == 'Advanced' }}"
 
 gpu_type:
   type: str
   choices:
     - nvidia    
-    - amd       
-    - any       
+    - amd          
     - cpu       
-  default: any
+  multiselect: true
+  default: [nvidia]
+
   help: |
     GPU type you plan to use for your lease:
     - nvidia: For NVIDIA GPU nodes
     - amd: For AMD GPU nodes
     - any: No preference — use whichever GPU type is available
     - cpu: CPU-only nodes (no GPU, good for classical ML or lightweight workloads)
+  when: "{{ setup_mode == 'Advanced' }}"
 
 ml_framework:
   type: str
@@ -125,7 +144,7 @@ ml_framework:
     - tensorflow
     - data-science
     - pytorch-lightning
-  default: pytorch
+  multiselect: true
   help: |
     Primary ML framework for your environment:
     - pytorch: PyTorch with GPU support
@@ -138,7 +157,7 @@ cuda_version:
   choices:
     - cuda11-latest
     - cuda12-latest
-  when: "{{ (ml_framework == 'pytorch' and gpu_type=='amd') }}"
+  when: "{{ ('pytorch' in ml_framework) or ('pytorch-lightning' in ml_framework) and ('nvidia' in gpu_type ) and (setup_mode == 'Advanced')  }}"
 
 include_huggingface:
   type: bool
@@ -148,22 +167,4 @@ include_huggingface:
     This will set up your containerized environment so you can download and use
     models directly from the Hugging Face Hub.
 
-include_example_notebooks:
-  type: bool
-  default: true
-  help: |
-    Include example ML notebooks showing:
-    - PyTorch manual logging with MLflow
-    - PyTorch Lightning auto-logging
-    - Sklearn auto-logging
-    - TensorFlow auto-logging
-
-example_notebook_choice:
-  type: str
-  help: "Select the example ML notebook type to include"
-  choices:
-    - PyTorch manual logging
-    - PyTorch Lightning auto-logging
-    - Sklearn auto-logging
-    - TensorFlow auto-logging
-  when: "{{ include_example_notebooks }}"
+  when: "{{ setup_mode == 'Advanced' }}"
