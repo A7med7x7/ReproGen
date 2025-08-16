@@ -19,26 +19,39 @@ S3_SECRET_ACCESS_KEY=$(grep -A5 "\[$REMOTE_NAME\]" "$RCLONE_CONF" | grep "secret
 S3_ENDPOINT_URL=$(grep -A5 "\[$REMOTE_NAME\]" "$RCLONE_CONF" | grep "endpoint" | cut -d '=' -f2 | xargs)
 
 
+# Project configuration
 # Get public IP
 HOST_IP=$(curl -s ifconfig.me)
 
-# Project configuration
-PROJECT_NAME="{{ project_name }}"
+
+# Hugging Face setup
+HF_HOME="/mnt/data/hf_cache"
+HF_TOKEN_PATH="/tmp/hf_token"
+
 {% if include_huggingface %}
 echo -n "🔐 Enter your Hugging Face token (will not be displayed): "
 read -s HF_TOKEN
 echo
+
+# Write token to ephemeral location
+echo "$HF_TOKEN" > "$HF_TOKEN_PATH"
+chmod 600 "$HF_TOKEN_PATH"
 {% endif %}
 
-HF_HOME="/mnt/data/hf_cache"
+
+
 # Creating .env file
+
 {
   echo "S3_ACCESS_KEY=${S3_ACCESS_KEY}"
   echo "S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}"
   echo "HOST_IP=${HOST_IP}"
   echo "PROJECT_NAME=${PROJECT_NAME}"
   echo "S3_ENDPOINT_URL=${S3_ENDPOINT_URL}"
-  {% if include_huggingface %}echo "HF_TOKEN=${HF_TOKEN}"{% endif %}
+  echo "HF_HOME=${HF_HOME}"
+  {% if include_huggingface %}}echo "HF_TOKEN_PATH=${HF_TOKEN_PATH}"{% endif %}
 } > "$ENV_FILE"
 
 echo "✅ The .env file has been generated successfully at : $ENV_FILE"
+echo "🔑 Hugging Face token has been stored securely at: $HF_TOKEN_PATH"
+{% endif %}
