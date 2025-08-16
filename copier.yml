@@ -135,21 +135,21 @@ gpu_type:
     - amd: For AMD GPU nodes
     - any: No preference — use whichever GPU type is available
     - cpu: CPU-only nodes (no GPU, good for classical ML or lightweight workloads)
-  when: "{{ setup_mode == 'Advanced' }}"
+  when: "{{ setup_mode == 'Advanced' and chameleon_site != 'KVM@TACC' }}"
 
 ml_framework:
   type: str
   choices:
     - pytorch
-    - tensorflow
-    - data-science
     - pytorch-lightning
+    - tensorflow
+    - sklearn
   multiselect: true
   help: |
     Primary ML framework for your environment:
     - pytorch: PyTorch with GPU support
     - tensorflow: TensorFlow with GPU support
-    - data-science: General data science stack (pandas, sklearn, etc.)
+    - sklearn: General data science stack (pandas, sklearn, etc.)
 
 cuda_version:
   type: str
@@ -157,7 +157,7 @@ cuda_version:
   choices:
     - cuda11-latest
     - cuda12-latest
-  when: "{{ ('pytorch' in ml_framework) or ('pytorch-lightning' in ml_framework) and ('nvidia' in gpu_type ) and (setup_mode == 'Advanced')  }}"
+  when: "{{ (('pytorch' in ml_framework) or ('pytorch-lightning' in ml_framework)) and ('nvidia' in gpu_type) and (setup_mode == 'Advanced') }}"
 
 include_huggingface:
   type: bool
