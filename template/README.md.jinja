@@ -67,7 +67,7 @@ On your computer instance (SSH-ing from your local machine via shell), generate 
 From your **home directory** (`~`), run:
 
 ```sh
-bash ./fancyproject/scripts/generate_env.sh
+bash ./{{ project_name }}/scripts/generate_env.sh
 ```
 
 you will be prompted to enter your HuggingFace Token,after inputting.
@@ -82,36 +82,43 @@ From your **home directory** (`~`), run:
 ```sh
 docker compose --env-file ~/.env -f {{ project_name }}/docker/docker-compose.yml up -d --build
 ```
-
 ---
 
 ### Login to Jupyter Lab and MLFlow UI
 
-1. Access your jupyter lab at:  `<HOST_IP>:8888` you can grab the token from running image using the command:
+after your build finished, with the output 
 
 ```sh
-docker logs jupyter 2>&1 | grep -oE "http://127.0.0.1:8888[^ ]*token=[^ ]*"
-```
+[+] Running 5/5
+ ✔ docker-jupyter          Built                                                                                                             
+ ✔ docker-mlflow           Built                                                                                                             
+ ✔ Network docker_default  Created                                                                                                           
+ ✔ Container mlflow        Started                                                                                                     
+ ✔ Container jupyter       Started        
+ ```
 
-- In the Jupyter terminal, log into GitHub using the CLI
+you can access your Jupyter Lab and MLflow UI 
+1. Access your jupyter: you can grab the token from running image using the command:
 
 ```sh
-gh auth login
+docker exec jupyter jupyter server list | tail -n 1 | cut -f1 -d" " | sed "s/localhost/$(curl -s ifconfig.me)/"
 ```
 
-Follow the intstructions to authenticate.
+Open the printed URL in your browser.
+2. Access MLflow UI 
 
-2. Access MLFlow UI at `<HOST_IP>:8000`
+```sh
+echo "http://$(curl -s ifconfig.me):$(docker port mlflow 8000 | cut -d':' -f2)"
 
-### Use the environment
-
+```
+Open this URL in your browser to see your experiments and logs.
 
 ### 5.5. Stop the Containerized Environment
 
 If you’d like to pause your environment, you can stop the running containers with the command:
 
 ```sh
-docker compose --env-file ~/.env -f ReproGen/docker/docker-compose.yml down
+docker compose --env-file ~/.env -f {{ project_name }}/docker/docker-compose.yml down
 ```
 
 This will stop and remove the containers, but all your data in mounted volumes will remain safe.
@@ -125,4 +132,4 @@ When finished, delete your server to free up resources.
 
 **In Chameleon JupyterHub, open and run:**
 
-- [`chi/2_delete_resources.ipynb`](chi/2_delete_resources.ipynb)
+- [`chi/3_delete_resources.ipynb`](chi/3_delete_resources.ipynb)
