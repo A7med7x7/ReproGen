@@ -21,14 +21,16 @@ services:
     ports: 
       - "8888:8888"
     volumes:
-      - ../notebooks:/home/jovyan/work/notebooks     
-      - ../src:/home/jovyan/work/src        
-      - ../utils:/home/jovyan/work/utils
+      - ~/{{ project_name }}:/home/jovyan/work/{{ project_name }}
       - /mnt/data:/home/jovyan/data        
     environment:
       - JUPYTER_ENABLE_LAB=yes
-      - PYTHONPATH=/home/jovyan/work/
+      - PYTHONPATH=/home/jovyan/work/{{ project_name }}
       - MLFLOW_TRACKING_URI=http://mlflow:8000
+      {% if include_huggingface %}
+      - HF_HOME=${HF_HOME}
+      - HF_TOKEN_PATH=${HF_TOKEN_PATH}
+      {% endif %}
     {% if "nvidia" in gpu_type %}
     runtime: nvidia
     {% elif "amd" in gpu_type %}
@@ -50,9 +52,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
       - AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED
       - AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED  
-      {% if include_huggingface %}
-      - HF_TOKEN=${HF_TOKEN}
-      {% endif %}
+
     volumes:
       - /mnt/metrics:/mlflow/mlruns 
     command:
