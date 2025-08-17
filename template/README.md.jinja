@@ -1,6 +1,18 @@
 # {{ project_name }}
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+Welcome! This project is designed to help you **run ML experiments on Chameleon Cloud** with minimal setup, follow the guide below in order to know how to use the generated project. 
+
+## Purpose of this README
+
+This README is for **users who have already generated the project**.  
+It explains how to **provision resources, creating confuguring servers using notebooks, and setup your environment** on Chameleon Cloud.  
+
+> If you are looking for instructions on **how to generate this project** from the template, see the **[main README](https://github.com/A7med7x7/ReproGen/blob/dev/README.md) at the root of the template repository**.
+
+### Prerequisites
+
+- You must have a [Chameleon Cloud](https://chameleoncloud.org) account, and an allocation as part of a project. 
+- You should have already configured SSH keys at the Chameleon site that you plan to use, e.g. following [Hello, Chameleon](https://teaching-on-testbeds.github.io/hello-chameleon/).
 
 
 ## Provisioning resources on Chameleon Cloud
@@ -9,26 +21,43 @@ The `chi` directory in your newly created project automates setting up data buck
 
 In [Chameleon JupyterHub](https://jupyter.chameleoncloud.org/hub/), clone your new project and open the `chi` directory.
 
-### Prerequisites
-
-You must have a [Chameleon Cloud](https://chameleoncloud.org) account, and an allocation as part of a project. You should have already configured SSH keys at the Chameleon site that you plan to use, e.g. following [Hello, Chameleon](https://teaching-on-testbeds.github.io/hello-chameleon/).
+```sh 
+git clone {{ repo_url }}
+```
 
 ### First run only: Create object store buckets
 
 At the beginning of your project, you will create buckets in Chameleon's object store, to hold datasets, metrics, and artifacts from experiment runs. Unlike data saved to the ephemeral local disk of the compute instance, this data will persist beyond the lifetime of the compute instance.
 
-Inside the `chi` directory, run the notebook `0_create_buckets.ipynb` to create these buckets.
+Inside the `chi` directory, run the notebook [`0_create_buckets.ipynb`](chi/0_create_buckets.ipynb) to create these buckets.
 
 ### Launching a compute instance
 
 When you need to work on your project, you will launch a compute instance on Chameleon Cloud.
 
-First, you will reserve an instance. Use your project name as a prefix for your lease name.
-
+First, you will [reserve an instance](https://chameleoncloud.readthedocs.io/en/latest/technical/reservations/gui_reservations.html). Use your project name as a prefix for your lease name.
+(e.g {{ project_name }})_gpu_p100
 Then, to provision your server and configure it for your project, you will run:
 
-- For NVIDIA: [`chi/1_create_server_nvidia.ipynb`](chi/1_create_server_nvidia.ipynb)
-- For AMD:  [`chi/1_create_server_amd.ipynb`](chi/1_create_server_amd.ipynb)
+{% if chameleon_site == 'KVM@TACC' and 'cpu' in gpu_type %}
+- [`chi/1_create_server.ipynb`](chi/1_create_server.ipynb)
+{% endif %}
+
+{% if chameleon_site == 'KVM@TACC' and 'nvidia' in gpu_type %}
+- [`chi/1_create_server_nvidia.ipynb`](chi/1_create_server_nvidia.ipynb)
+{% endif %}
+
+{% if chameleon_site in ['CHI@TACC', 'CHI@UC'] and 'amd' in gpu_type %}
+- [`chi/1_create_server_amd.ipynb`](chi/1_create_server_amd.ipynb)
+{% endif %}
+
+{% if chameleon_site in ['CHI@TACC', 'CHI@UC'] and 'cpu' in gpu_type %}
+- [`chi/1_create_server_cpu.ipynb`](chi/1_create_server_cpu.ipynb)
+{% endif %}
+
+{% if chameleon_site in ['CHI@TACC', 'CHI@UC'] and 'nvidia' in gpu_type %}
+- [`chi/1_create_server_nvidia.ipynb`](chi/1_create_server_nvidia.ipynb)
+{% endif %}
 
 ---
 
@@ -38,7 +67,7 @@ On your computer instance (SSH-ing from your local machine via shell), generate 
 From your **home directory** (`~`), run:
 
 ```sh
- ./ReproGen/scripts/generate_env.sh
+bash ./fancyproject/scripts/generate_env.sh
 ```
 
 you will be prompted to enter your HuggingFace Token,after inputting.
@@ -51,7 +80,7 @@ you should see something like:
 From your **home directory** (`~`), run:
 
 ```sh
-docker compose --env-file ~/.env -f ReproGen/docker/docker-compose.yml up -d --build
+docker compose --env-file ~/.env -f {{ project_name }}/docker/docker-compose.yml up -d --build
 ```
 
 ---
