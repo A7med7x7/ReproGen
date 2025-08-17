@@ -43,7 +43,11 @@
     "\n",
     "- listing all leases starting with {{ project_name }} and \"ACTIVE\"\n",
     "\n",
-    "after looking into into leases provide the lease name you want to select in the parameter `lease_name`"
+    "after looking into into leases provide the lease name you want to select in the parameter `lease_name`\n",
+    "\n",
+    "- if one match -> returns it.\n",
+    "- Multiple matches -> lists them so you can pick.\n",
+    "- No matches -> tells you nothing was found.\n"
    ]
   },
   {
@@ -53,7 +57,15 @@
    "outputs": [],
    "source": [
     "project_name = \"{{ project_name }}\"\n",
-    "lease_name = None # replace with the lease name you want to select\n",
+    "lease_name = None # replace with the lease name you want to select"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
     "def get_active_lease(lease_name=None, project_name=None):\n",
     "\n",
     "    leases = lease.list_leases()\n",
@@ -90,7 +102,7 @@
    "source": [
     "l = get_active_lease(lease_name, project_name)\n",
     "print(f\"using lease: {l.name}\")\n",
-    "l.show()"
+    "l.show() "
    ]
   },
   {

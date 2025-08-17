@@ -1,0 +1,230 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Configure a server\n",
+    "after you created your server, this notebook will handle stitching everything together, we will start by:\n",
+    "- Get credentials for our object store buckets\n",
+    "- Run our containerized environment (Jupyter and MLflow)\n",
+    "###  Prerequisites\n",
+    "- This notebook assumes that you are logged into Chameleon JupyterHub and are running the cells from within that environment\n",
+    "- you have created a server and its ACTIVE in status "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "tags": []
+   },
+   "source": [
+    "## Retrieve server\n",
+    "\n",
+    "We will start by getting our server object in this notebook using python-chi "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "from chi import server, context\n",
+    "import getpass\n",
+    "import os\n",
+    "\n",
+    "context.version = \"1.0\" \n",
+    "context.choose_project()\n",
+    "context.choose_site(default=\"{{ chameleon_site }}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "server_name = None # replace with the server name you want to select\n",
+    "project_name = \"{{ project_name }}\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "def get_active_server(server_name=None, project_name=None):\n",
+    "    all_servers = server.list_servers()\n",
+    "\n",
+    "    if server_name:\n",
+    "        match = next((s for s in all_servers if s.name == server_name), None)\n",
+    "        if not match:\n",
+    "            raise ValueError(f\"no server found with name '{server_name}'\")\n",
+    "        return match\n",
+    "\n",
+    "    matching = [s for s in all_servers if s.name.startswith(project_name)]\n",
+    "\n",
+    "    if not matching:\n",
+    "        raise ValueError(f\"no server found starting with '{project_name}'\")\n",
+    "\n",
+    "    if len(matching) > 1:\n",
+    "        print(\"multiple servers found:\")\n",
+    "        for s in matching:\n",
+    "            print(f\" - {s.name} (status: {s.status})\")\n",
+    "        raise ValueError(\"set 'server_name' to select the correct server.\")\n",
+    "\n",
+    "    return matching[0]\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "s = get_active_server(server_name, project_name)\n",
+    "s.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Generate environment variables \n",
+    "\n",
+    "after configuring our server and before running our containerized environment we need to generate environment variables to be included in our MLflow server so it can communicate to the S3_Buckets we created earlier, \n",
+    "{% if include_huggingface %} the variables are going to be stored on `.env` file on our home directory on the compute instance {% endif %}"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "{% if include_huggingface %}\n",
+    "### HuggingFace setup \n",
+    "{% endif %}\n",
+    "\n",
+    "{% if not include_huggingface %}\n",
+    "the variables will  going to be stored on `.env` file on our home directory on the compute instance \n",
+    "{% endif %}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "{% if include_huggingface %}\n",
+    "# this is a hidden input, to make sure we are not pushing this to remote repository with the token visiable\n",
+    "hf_token = getpass.getpass(\"enter you Hugging face token 🤗 : \")  \n",
+    "# generating the .env file\n",
+    "s.execute(f\"bash ./{{ project_name }}/scripts/generate_env.sh '{hf_token}'\")  # passing hf_token as an argument\n",
+    "{% endif %}\n",
+    "{% if not include_huggingface %}\n",
+    "s.execute(f\"bash ./{{ project_name }}/scripts/generate_env.sh\") \n",
+    "{% endif %}"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Run our containerized environment \n",
+    "\n",
+    "now we will pass the generated environment variables stored on .env file and run our docker-compose.yml to have our Jupyter lab and MLflow server up and running."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "s.execute(\"docker compose --env-file ~/.env -f {{ project_name }}/docker/docker-compose.yml up -d --build\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Login to Jupyter Lab and MLFlow UI\n",
+    "Now that we have our containers running, we need to login, for Jupyter run the following commands to get the URL"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "# Jupyter Lab URL open the URL in your browser.\n",
+    "s.execute('docker exec jupyter jupyter server list | tail -n 1 | cut -f1 -d\" \" | sed \"s/localhost/$(curl -s ifconfig.me)/\"')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "# MLflow server URL\n",
+    "s.execute('echo \"http://$(curl -s ifconfig.me):$(docker port mlflow 8000 | cut -d\":\" -f2)\"')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Next Steps & Further Actions\n",
+    "\n",
+    "You've completed the main workflow in this notebook! \n",
+    "There’s more you can do if you want to explore further:\n",
+    "\n",
+    "- Stop your containerized environment safely when you're done working.\n",
+    "- logging into GitHub from the contrainer \n",
+    "\n",
+    "For detailed instructions on these actions, please refer to the [**project README.md file**](../README.md)\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.12.10"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
