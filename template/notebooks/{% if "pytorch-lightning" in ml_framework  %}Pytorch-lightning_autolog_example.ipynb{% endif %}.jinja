@@ -3,7 +3,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "457cf636",
+   "id": "5caf9b83",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -11,14 +11,30 @@
     "import mlflow.pytorch\n",
     "import pytorch_lightning as pl\n",
     "from pytorch_lightning.loggers import MLFlowLogger\n",
-    "from utils.mlflow_log import log_git, log_gpu\n",
-    "\n",
+    "from utils.mlflow_log import log_git, log_gpu\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "457cf636",
+   "metadata": {},
+   "outputs": [],
+   "source": [
     "# Start an experiment and assign it a name\n",
+    "config = {\n",
+    "    \"lr\": 1e-4,\n",
+    "    \"batch_size\": 32,\n",
+    "    \"epochs\": 10,\n",
+    "}\n",
+    "\n",
+    "device = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")\n",
+    "\n",
     "EXPERIMENT_NAME = \"{{ project_name }}\"\n",
     "mlflow.set_experiment(EXPERIMENT_NAME)\n",
     "\n",
     "# Start MLflow run\n",
-    "with mlflow.start_run(tags={\"mlflow.user\": \"{{ author_name }}\"},log_system_metrics=True) as run:\n",
+    "with mlflow.start_run(log_system_metrics=True) as run:\n",
     "    # Log Git and Python info\n",
     "    log_git()\n",
     "    log_gpu()\n",

@@ -3,7 +3,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "10bfe14d",
+   "id": "c7805de7",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -12,8 +12,16 @@
     "import torch\n",
     "import torch.nn as nn\n",
     "import torch.optim as optim\n",
-    "from utils.mlflow_log import log_git, log_gpu\n",
-    "\n",
+    "from utils.mlflow_log import log_git, log_gpu\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "10bfe14d",
+   "metadata": {},
+   "outputs": [],
+   "source": [
     "# Config\n",
     "config = {\n",
     "    \"lr\": 1e-4,\n",
@@ -27,7 +35,7 @@
     "mlflow.set_experiment(\"{{ project_name }}\")\n",
     "\n",
     "# Configure run\n",
-    "with mlflow.start_run(tags={\"mlflow.user\": \"{{ author_name }}\"},log_system_metrics=True) as run:\n",
+    "with mlflow.start_run(log_system_metrics=True) as run:\n",
     "    # Log Git, Python and GPU info.\n",
     "    log_git()\n",
     "    log_gpu()\n",
