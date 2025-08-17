@@ -122,20 +122,25 @@ bucket_site:
 
 gpu_type:
   type: str
-  choices:
-    - nvidia    
-    - amd          
-    - cpu       
   multiselect: true
+  choices: |
+    {%- if chameleon_site == "KVM@TACC" -%}
+    - nvidia
+    - cpu
+    {%- else -%}
+    - nvidia
+    - amd
+    - cpu
+    {%- endif -%}
   default: [nvidia]
-
   help: |
     GPU type you plan to use for your lease:
     - nvidia: For NVIDIA GPU nodes
     - amd: For AMD GPU nodes
     - any: No preference — use whichever GPU type is available
     - cpu: CPU-only nodes (no GPU, good for classical ML or lightweight workloads)
-  when: "{{ setup_mode == 'Advanced' and chameleon_site != 'KVM@TACC' }}"
+  when: "{{ setup_mode == 'Advanced' }}"
+
 
 ml_framework:
   type: str
