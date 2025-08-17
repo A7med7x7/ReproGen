@@ -37,6 +37,7 @@ services:
     runtime: rocm
     {% endif %}
     restart: always 
+    shm_size: 2g
 
   mlflow:
     build:
