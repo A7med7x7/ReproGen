@@ -20,6 +20,7 @@ S3_ENDPOINT_URL=$(grep -A5 "\[$REMOTE_NAME\]" "$RCLONE_CONF" | grep "endpoint" |
 
 
 # Project configuration
+PROJECT_NAME={{ project_name }}
 # Get public IP
 HOST_IP=$(curl -s ifconfig.me)
 
@@ -48,6 +49,7 @@ chmod 600 "$HF_TOKEN_PATH"
   echo "HF_HOME=${HF_HOME}"
   {% if include_huggingface %}echo "HF_TOKEN_PATH=${HF_TOKEN_PATH}"{% endif %}
 } > "$ENV_FILE"
+
 
 echo "✅ The .env file has been generated successfully at : $ENV_FILE"
 echo "🔑 Hugging Face token has been stored securely at: $HF_TOKEN_PATH"
