@@ -4,33 +4,29 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "## Launch and set up NVIDIA instance - with python-chi\n",
+    "## Launch and set up AMD bare metal server - with python-chi\n",
     "\n",
     "At the beginning of the lease time, we will bring up our GPU server. We will use the `python-chi` Python API to Chameleon to provision our server.\n",
     "\n",
     "Run the following cells, and make sure the correct site and project are selected:\n",
     "\n",
-    "\n",
     "###  Prerequisites\n",
     "- This notebook assumes that You must be logged into Chameleon JupyterHub and you run the following cells there.\n",
-    "- You have already reserved a lease on Chameleon Cloud that includes a GPU flavor "
+    "- You have already reserved a lease on Chameleon Cloud that includes a GPU-enabled bare metal node (such as gpu_mi100)"
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
+   "metadata": {},
    "outputs": [],
    "source": [
-    "from chi import server, context\n",
-    "from utils.chi import get_active_lease\n",
-    "import os \n",
+    "from chi import server, context, lease\n",
+    "import os, time\n",
     "\n",
     "context.version = \"1.0\" \n",
     "context.choose_project()\n",
-    "context.choose_site(default=\"KVM@TACC\")"
+    "context.choose_site(default=\"{{ chameleon_site }}\")"
    ]
   },
   {
@@ -52,14 +48,45 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
+   "metadata": {},
    "outputs": [],
    "source": [
     "project_name = \"{{ project_name }}\"\n",
     "lease_name = None # replace with the lease name you want to select\n",
+    "def get_active_lease(lease_name=None, project_name=None):\n",
     "\n",
+    "    leases = lease.list_leases()\n",
+    "\n",
+    "    # retrieve exact lease name provided\n",
+    "    if lease_name:\n",
+    "        match = next((l for l in leases if l.name == lease_name), None)\n",
+    "        if not match:\n",
+    "            raise ValueError(f\"no lease found with name '{lease_name}'\")\n",
+    "        return match\n",
+    "\n",
+    "    matching = [\n",
+    "        l for l in leases\n",
+    "        if l.name.startswith(project_name) and l.status.upper() == \"ACTIVE\"\n",
+    "    ]\n",
+    "\n",
+    "    if not matching:\n",
+    "        raise ValueError(f\"no active lease found starting with '{project_name}'\")\n",
+    "\n",
+    "    if len(matching) > 1:\n",
+    "        print(\"you have multiple active leases:\")\n",
+    "        for l in matching:\n",
+    "            print(f\" - {l.name} (status: {l.status})\")\n",
+    "        raise ValueError(\"set 'lease_name' to pick the correct lease.\")\n",
+    "\n",
+    "    return matching[0]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
     "l = get_active_lease(lease_name, project_name)\n",
     "print(f\"using lease: {l.name}\")\n",
     "l.show()"
@@ -80,7 +107,7 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "We will use the lease to bring up a server with the `CC-Ubuntu24.04-CUDA` disk image.\n",
+    "We will use the lease to bring up a server with the `CC-Ubuntu24.04-ROCm` disk image. (The default Ubuntu 24.04 kernel is not compatible with the AMD GPU on these nodes.)\n",
     "\n",
     "> **Note**: the following cell brings up a server only if you don’t already have one with the same name! (Regardless of its error state.) If you have a server in ERROR state already, delete it first in the Horizon GUI before you run this cell."
    ]
@@ -88,19 +115,23 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
+   "metadata": {},
    "outputs": [],
    "source": [
-    "reserved_flavor = l.get_reserved_flavors().pop()\n",
-    "username = os.getenv('USER') # all exp resources will have this suffix\n",
+    "username = os.getenv('USER') # all exp resources will have this prefix\n",
     "s = server.Server(\n",
-    "    f\"gpu-instance-{{ project_name }}-{username}\", \n",
-    "    flavor_name=reserved_flavor.name,\n",
-    "    image_name=\"CC-Ubuntu24.04-CUDA\"\n",
+    "    f\"node-{{ project_name }}-{username}\", \n",
+    "    reservation_id=l.node_reservations[0][\"id\"],\n",
+    "    image_name=\"CC-Ubuntu24.04-ROCm\"\n",
     ")\n",
     "s.submit(idempotent=True)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Note: security groups are not used at Chameleon bare metal sites, so we do not have to configure any security groups on this instance."
    ]
   },
   {
@@ -114,15 +145,23 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
+   "metadata": {},
    "outputs": [],
    "source": [
     "s.associate_floating_ip()"
    ]
   },
   {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.refresh()\n",
+    "s.check_connectivity()"
+   ]
+  },
+  {
    "cell_type": "markdown",
    "metadata": {},
    "source": [
@@ -132,73 +171,11 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "metadata": {
-    "collapsed": true,
-    "jupyter": {
-     "outputs_hidden": true
-    },
-    "tags": []
-   },
+   "metadata": {},
    "outputs": [],
    "source": [
     "s.refresh()\n",
     "s.show(type=\"widget\")"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {
-    "tags": []
-   },
-   "source": [
-    "## Security Groups\n",
-    "\n",
-    "By default, all connections to VM resources are blocked, as a security measure. We need to attach one or more “security groups” to our VM resource, to permit access over the Internet to specified ports.\n",
-    "The following security groups will be created (if they do not already exist in our project) and then added to our server:"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "In the output below, make a note of the floating IP that has been assigned to your instance (in the “Addresses” row)."
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
-   "outputs": [],
-   "source": [
-    "import chi\n",
-    "security_groups = [\n",
-    "  {'name': \"allow-ssh\", 'port': 22, 'description': \"Enable SSH traffic on TCP port 22\"},\n",
-    "  {'name': \"allow-8888\", 'port': 8888, 'description': \"Enable TCP port 8888 (used by Jupyter)\"},\n",
-    "  {'name': \"allow-8000\", 'port': 8000, 'description': \"Enable TCP port 8000 (used by MLFlow)\"}\n",
-    "]"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
-   "outputs": [],
-   "source": [
-    "# configure openstacksdk for actions unsupported by python-chi\n",
-    "os_conn = chi.clients.connection()\n",
-    "nova_server = chi.nova().servers.get(s.id)\n",
-    "\n",
-    "for sg in security_groups:\n",
-    "    if not os_conn.get_security_group(sg['name']):\n",
-    "        os_conn.create_security_group(sg['name'], sg['description'])\n",
-    "        os_conn.create_security_group_rule(sg['name'], port_range_min=sg['port'], port_range_max=sg['port'], protocol='tcp', remote_ip_prefix='0.0.0.0/0')\n",
-    "\n",
-    "    nova_server.add_security_group(sg['name'])\n",
-    "print(f\"updated security groups: {[group.name for group in nova_server.list_security_group()]}\")"
    ]
   },
   {
@@ -213,13 +190,11 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
+   "metadata": {},
    "outputs": [],
    "source": [
     "repo = \"{{ repo_url }}\" \n",
-    "s.execute(f\"git clone {repo} {{ project_name}}\")"
+    "s.execute(f\"git clone {repo}  {{ project_name }}\") "
    ]
   },
   {
@@ -228,15 +203,13 @@
    "source": [
     "## Set up Docker\n",
     "\n",
-    "To use common deep learning frameworks like Tensorflow or PyTorch, and ML training platforms like MLFlow and JupyterLab, we can run containers that have all the prerequisite libraries necessary for these frameworks. Here, we will set up the container framework."
+    "To use common deep learning frameworks like Tensorflow or PyTorch, and ML training platforms like MLFlow and Ray, we can run containers that have all the prerequisite libraries necessary for these frameworks. Here, we will set up the container framework."
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
+   "metadata": {},
    "outputs": [],
    "source": [
     "s.execute(\"curl -sSL https://get.docker.com/ | sudo sh\")\n",
@@ -247,36 +220,11 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "## Set up the NVIDIA container toolkit\n",
+    "## Set up the AMD GPU\n",
     "\n",
-    "We will also install the NVIDIA container toolkit, with which we can access GPUs from inside our containers."
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
-   "outputs": [],
-   "source": [
-    "s.execute(\"curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \\\n",
-    "  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \\\n",
-    "    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \\\n",
-    "    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list\")\n",
-    "s.execute(\"sudo apt update\")\n",
-    "s.execute(\"sudo apt-get install -y nvidia-container-toolkit\")\n",
-    "s.execute(\"sudo nvidia-ctk runtime configure --runtime=docker\")\n",
-    "# for https://github.com/NVIDIA/nvidia-container-toolkit/issues/48\n",
-    "s.execute(\"sudo jq 'if has(\\\"exec-opts\\\") then . else . + {\\\"exec-opts\\\": [\\\"native.cgroupdriver=cgroupfs\\\"]} end' /etc/docker/daemon.json | sudo tee /etc/docker/daemon.json.tmp > /dev/null && sudo mv /etc/docker/daemon.json.tmp /etc/docker/daemon.json\")\n",
-    "s.execute(\"sudo systemctl restart docker\")"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "and we can install `nvtop` to monitor GPU usage:"
+    "Before we can use the AMD GPUs, we need to set up the driver using the `amdgpu-install` utility.\n",
+    "\n",
+    "Let’s follow [AMD’s instructions for setting up `amdgpu-install`](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/install-methods/amdgpu-installer/amdgpu-installer-ubuntu.html#installation):"
    ]
   },
   {
@@ -285,14 +233,115 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "s.execute(\"sudo apt -y install nvtop\")"
+    "s.execute(\"sudo apt update; wget https://repo.radeon.com/amdgpu-install/6.3.3/ubuntu/noble/amdgpu-install_6.3.60303-1_all.deb\")\n",
+    "s.execute(\"sudo apt -y install ./amdgpu-install_6.3.60303-1_all.deb; sudo apt update\")"
    ]
   },
   {
    "cell_type": "markdown",
-   "metadata": {
-    "tags": []
-   },
+   "metadata": {},
+   "source": [
+    "To [run containers using ROCm](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html) (Radeon Open Compute Platform), an open-source software stack from AMD that allows users to program AMD GPUs (similar to NVIDIA’s CUDA), we need to install the `amdgpu-dkms` driver:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"amdgpu-install -y --usecase=dkms\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "And, we’ll also install the `rocm-smi` utility, so that we can monitor the GPU from the host:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"sudo apt -y install rocm-smi\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Finally, we will add the `cc` user to the `video` and `render` groups, which are needed for access to the GPU:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"sudo usermod -aG video,render $USER\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"sudo reboot\")\n",
+    "time.sleep(30)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.refresh()\n",
+    "s.check_connectivity()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Run"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"rocm-smi\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We can also install `nvtop` to monitor GPU usage - we’ll install from source, because the older version in the Ubuntu package repositories does not support AMD GPUs:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"sudo apt -y install cmake libncurses-dev libsystemd-dev libudev-dev libdrm-dev libgtest-dev\")\n",
+    "s.execute(\"git clone https://github.com/Syllo/nvtop\")\n",
+    "s.execute(\"mkdir -p nvtop/build && cd nvtop/build && cmake .. -DAMDGPU_SUPPORT=ON && sudo make install\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
    "source": [
     "## Mounting S3_buckets to filesystem"
    ]
@@ -307,22 +356,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
-   "outputs": [],
-   "source": [
-    "# installing rclone on the compute instance\n",
-    "s.execute(\"curl https://rclone.org/install.sh | sudo bash\")\n",
-    "s.execute(\"mkdir -p ~/.config/rclone\")"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
+   "metadata": {},
    "outputs": [],
    "source": [
     "# this line makes sure user_allow_other is un-commented in /etc/fuse.conf\n",
@@ -330,11 +364,16 @@
    ]
   },
   {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Enabling the `user_allow_other` option ensures that filesystems mounted by our user (such as an object store mounted with rclone) are accessible to other users and processes, including Docker containers running Jupyter notebooks"
+   ]
+  },
+  {
    "cell_type": "code",
    "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
+   "metadata": {},
    "outputs": [],
    "source": [
     "# Mounting the buckets using rclone \n",
@@ -354,19 +393,10 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
+   "metadata": {},
    "outputs": [],
    "source": [
     "s.execute(\"ls -l /mnt/\") # we should be able to see the mounted buckets"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "## Access the server over SSH\n"
    ]
   },
   {
@@ -379,7 +409,7 @@
     "\n",
     "where\n",
     "\n",
-    "-   in place of `~/.ssh/id_rsa_chameleon`, substitute the path to your own key that you had uploaded to KVM@TACC\n",
+    "-   in place of `~/.ssh/id_rsa_chameleon`, substitute the path to your own key that you had uploaded to {{ chameleon_site }}\n",
     "-   in place of `A.B.C.D`, use the floating IP address you just associated to your instance."
    ]
   }
