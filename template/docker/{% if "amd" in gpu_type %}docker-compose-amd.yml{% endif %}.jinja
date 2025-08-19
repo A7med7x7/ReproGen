@@ -21,7 +21,7 @@ services:
       - /mnt/data:/home/jovyan/data        
     environment:
       - JUPYTER_ENABLE_LAB=yes
-      - PYTHONPATH=/home/jovyan/work/mltrain_mlflow
+      - PYTHONPATH=/home/jovyan/work/{{ project_name }}
       - MLFLOW_TRACKING_URI=http://mlflow:8000
       - AMD_VISIBLE_DEVICES=all
       - HF_HOME=${HF_HOME}
