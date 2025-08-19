@@ -1,15 +1,6 @@
 FROM quay.io/jupyter/scipy-notebook
 
-ARG ROCM_VERSION=6.3
-ARG AMDGPU_VERSION=6.3.60300
-
-USER root
-RUN wget https://repo.radeon.com/amdgpu-install/$ROCM_VERSION/ubuntu/noble/amdgpu-install_$AMDGPU_VERSION-1_all.deb &&  \
-    apt-get update --yes && \
-    apt-get install --yes ./amdgpu-install_$AMDGPU_VERSION-1_all.deb  
-
-RUN amdgpu-install --usecase=rocm -y && rm *.deb  
-
+USER root 
 # Install GitHub CLI tool
 RUN apt-get update && \
     apt-get install -y curl gnupg lsb-release && \
@@ -20,19 +11,15 @@ RUN apt-get update && \
     apt-get update && apt-get install -y gh && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+RUN usermod -aG video $NB_USER
+
 USER ${NB_UID}
 
-# Adjust final path
-ENV PATH="/opt/venv/bin:$PATH:/opt/rocm/bin/" 
-
 # Install PyTorch with ROCm compatibility, and Lightning
-RUN pip install --pre --no-cache-dir  --index-url https://download.pytorch.org/whl/nightly/rocm6.3/ \
+RUN pip install --pre --no-cache-dir  --index-url https://download.pytorch.org/whl/nightly/rocm6.4/ \
     'torch' \
     'torchaudio' \
     'torchvision' && \
-    {% if "pytorch-lightning" in ml_framework  %}
-    pip install --pre --no-cache-dir lightning && \
-    {% endif %}
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 

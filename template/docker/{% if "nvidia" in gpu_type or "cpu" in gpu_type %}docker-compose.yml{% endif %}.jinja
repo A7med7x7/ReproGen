@@ -6,12 +6,8 @@ services:
       dockerfile:
         {% if "pytorch" in ml_framework and "nvidia" in gpu_type %}
         Dockerfile.jupyter-cuda-pt
-        {% elif "pytorch" in ml_framework and "amd" in gpu_type %}
-        Dockerfile.jupyter-rocm-pt
         {% elif "tensorflow" in ml_framework and "nvidia" in gpu_type %}
         Dockerfile.jupyter-cuda-tf
-        {% elif "tensorflow" in ml_framework and "amd" in gpu_type %}
-        Dockerfile.jupyter-rocm-tf
         {% elif "sklearn" in ml_framework %}
         Dockerfile.jupyter-ds
         {% else %}
@@ -33,8 +29,6 @@ services:
       {% endif %}
     {% if "nvidia" in gpu_type %}
     runtime: nvidia
-    {% elif "amd" in gpu_type %}
-    runtime: rocm
     {% endif %}
     restart: always 
     shm_size: 2g
@@ -53,7 +47,6 @@ services:
       - AWS_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
       - AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED
       - AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED  
-
     volumes:
       - /mnt/metrics:/mlflow/mlruns 
     command:
