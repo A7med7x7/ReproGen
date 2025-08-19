@@ -78,10 +78,18 @@ you should see something like:
 ---
 
 From your **home directory** (`~`), run:
-
+{% if "nvidia" in gpu_type or "cpu in gpu_type"%}
 ```sh
 docker compose --env-file ~/.env -f {{ project_name }}/docker/docker-compose.yml up -d --build
 ```
+{% endif %}
+
+{% if "amd" in gpu_type%}
+for amd 
+```sh
+docker compose --env-file ~/.env -f {{ project_name }}/docker/docker-compose-amd.yml up -d --build
+```
+{% endif %}
 ---
 
 ### Login to Jupyter Lab and MLFlow UI
@@ -116,10 +124,18 @@ Open this URL in your browser to see your experiments and logs.
 ### 5.5. Stop the Containerized Environment
 
 If you’d like to pause your environment, you can stop the running containers with the command:
-
+{% if "nvidia" in gpu_type or "cpu in gpu_type"%}
 ```sh
 docker compose --env-file ~/.env -f {{ project_name }}/docker/docker-compose.yml down
 ```
+{% endif %}
+
+{% if "amd" in gpu_type %}
+for amd 
+```sh
+docker compose --env-file ~/.env -f {{ project_name }}/docker/docker-compose-amd.yml down
+```
+{% endif %}
 
 This will stop and remove the containers, but all your data in mounted volumes will remain safe.
 When you want to restart later, simply run the docker compose up command again (see Step 4).
