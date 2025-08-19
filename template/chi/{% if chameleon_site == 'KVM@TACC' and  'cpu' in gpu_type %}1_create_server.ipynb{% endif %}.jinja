@@ -24,8 +24,9 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "import chi\n",
     "from chi import server, context, lease\n",
+    "import getpass\n",
+    "import chi\n",
     "import os\n",
     "\n",
     "context.version = \"1.0\" \n",
@@ -39,13 +40,18 @@
    "source": [
     "## Select Active Lease\n",
     "\n",
-    "username = os.getenv('USER') # all exp resources will have this prefix\n",
-    "s = server.Server(\n",
-    "    f\"nolease-setup-{username}\", \n",
-    "    image_name=\"CC-Ubuntu24.04\",\n",
-    "    flavor_name=\"m1.large\"\n",
-    ")\n",
-    "s.submit(idempotent=True)"
+    "\n",
+    "In the previous steps (when setting up your project template)\n",
+    "we hightlights that you to name your lease starting with your project name (e.g., {{ project_name }}-gpu-test).\n",
+    "This naming, because the code below searches for your active lease by:\n",
+    "\n",
+    "- listing all leases starting with {{ project_name }} and \"ACTIVE\"\n",
+    "\n",
+    "- if one match -> returns it.\n",
+    "- multiple matches -> lists them so you can pick.\n",
+    "- no matches -> tells you nothing was found.\n",
+    "\n",
+    "after looking into into leases provide the lease name you want to select in the parameter `lease_name`\n"
    ]
   },
   {
@@ -55,12 +61,18 @@
    "outputs": [],
    "source": [
     "project_name = \"{{ project_name }}\"\n",
-    "lease_name = None # replace with the lease name you want to select\n",
-    "\n",
+    "lease_name = None # replace with the lease name you want to select"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
     "def get_active_lease(lease_name=None, project_name=None):\n",
     "\n",
     "    leases = lease.list_leases()\n",
-    "\n",
     "    # retrieve exact lease name provided\n",
     "    if lease_name:\n",
     "        match = next((l for l in leases if l.name == lease_name), None)\n",
@@ -125,7 +137,7 @@
     "reserved_flavor = l.get_reserved_flavors().pop()\n",
     "username = os.getenv('USER') # all exp resources will have this suffix\n",
     "s = server.Server(\n",
-    "    f\"instance-{{ project_name }}-{username}\", \n",
+    "    f\"{{ project_name }}-instance--{username}\", \n",
     "    flavor_name=reserved_flavor.name,\n",
     "    image_name=\"CC-Ubuntu24.04\"\n",
     ")\n",
@@ -276,7 +288,41 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "We also need to modify the configuration file for FUSE (Filesystem in USErspace), which is the Linux interface that allows user‑space applications (instead of the kernel) to mount and manage virtual filesystems. "
+    "We created our buckets earlier in the notebook  [0_create_buckets.ipynb](0_create_buckets.ipynb). To access and manage the data on our compute instance, we are going to use rclone, a powerful command-line tool that allows you to interact with our object storage systems like Chameleon object store service. \n",
+    "we first need to install rclone"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "s.execute(\"curl https://rclone.org/install.sh | sudo bash\") "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "now we also need to modify the configuration file for FUSE (Filesystem in USErspace), which is the Linux interface that allows user‑space applications (instead of the kernel) to mount and manage virtual filesystems. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Enabling the `user_allow_other` option ensures that filesystems mounted by our user (such as an object store mounted with rclone) are accessible to other users and processes, including Docker containers running Jupyter notebooks"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# this line makes sure user_allow_other is un-commented in /etc/fuse.conf\n",
+    "s.execute(\"sudo sed -i '/^#user_allow_other/s/^#//' /etc/fuse.conf\") "
    ]
   },
   {
@@ -306,7 +352,7 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "# Mounting the buckets using rclone \n",
+    "# mounting the buckets using rclone (note we are not mounting artifacts bucket)\n",
     "buckets = {\n",
     "    f'{project_name}-data': 'data',\n",
     "    f'{project_name}-mlflow-metrics': 'metrics'\n",

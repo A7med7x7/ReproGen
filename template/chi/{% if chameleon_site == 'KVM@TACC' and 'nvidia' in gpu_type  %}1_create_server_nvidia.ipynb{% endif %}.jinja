@@ -24,8 +24,9 @@
    },
    "outputs": [],
    "source": [
-    "import chi\n",
     "from chi import server, context, lease\n",
+    "import chi\n",
+    "import getpass\n",
     "import os \n",
     "\n",
     "context.version = \"1.0\" \n",
@@ -129,7 +130,7 @@
     "reserved_flavor = l.get_reserved_flavors().pop()\n",
     "username = os.getenv('USER') # all exp resources will have this suffix\n",
     "s = server.Server(\n",
-    "    f\"gpu-instance-{{ project_name }}-{username}\", \n",
+    "    f\"{{ project_name }}-gpu-instance--{username}\", \n",
     "    flavor_name=reserved_flavor.name,\n",
     "    image_name=\"CC-Ubuntu24.04-CUDA\"\n",
     ")\n",
@@ -333,7 +334,8 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "We also need to modify the configuration file for FUSE (Filesystem in USErspace), which is the Linux interface that allows user‑space applications (instead of the kernel) to mount and manage virtual filesystems. "
+    "We created our buckets earlier in the notebook  [0_create_buckets.ipynb](0_create_buckets.ipynb). To access and manage the data on our GPU compute node, we are going to use rclone, a powerful command-line tool that allows you to interact with our object storage systems like Chameleon object store service. \n",
+    "we first need to install rclone"
    ]
   },
   {
@@ -344,9 +346,21 @@
    },
    "outputs": [],
    "source": [
-    "# installing rclone on the compute instance\n",
-    "s.execute(\"curl https://rclone.org/install.sh | sudo bash\")\n",
-    "s.execute(\"mkdir -p ~/.config/rclone\")"
+    "s.execute(\"curl https://rclone.org/install.sh | sudo bash\") "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "now we also need to modify the configuration file for FUSE (Filesystem in USErspace), which is the Linux interface that allows user‑space applications (instead of the kernel) to mount and manage virtual filesystems. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Enabling the `user_allow_other` option ensures that filesystems mounted by our user (such as an object store mounted with rclone) are accessible to other users and processes, including Docker containers running Jupyter notebooks"
    ]
   },
   {
@@ -362,6 +376,43 @@
    ]
   },
   {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Next, we will a create a configuration file for rclone with the ID and secret, you need to generate application credentials: \n",
+    "go over the the chameleon cloud [Horizon GUI](https://chi.{% if chameleon_site == 'CHI@TACC' %}tacc{% elif chameleon_site == 'CHI@UC' %}uc{% elif chameleon_site == 'KVM@TACC' %}tacc{% endif %}.chameleoncloud.org/project/)\n",
+    "- enter to the horizon GUI \n",
+    "- in menu sidebar on the left side of the Horizon GUI, click “Identity”\n",
+    "- select \"Application Credentials\" \n",
+    "- click “Create Application Credential”.\n",
+    "\n",
+    "note: Copy the “ID” and “Secret” displayed in the dialog, and save them in a safe place. You will not be able to view the secret again from the Horizon GUI. Then, click “Download openrc file” to have another copy of the secret.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "ACCESS_KEY = getpass.getpass(\"Enter your S3 access key: \")\n",
+    "SECRET_KEY = getpass.getpass(\"Enter your S3 secret key: \")\n",
+    "ENDPOINT = getpass.getpass(\"Enter your S3 endpoint URL: \")\n",
+    "\n",
+    "s.execute(f\"\"\"\n",
+    "sudo mkdir -p ~/.config/rclone\n",
+    "cat << EOF | sudo tee ~/.config/rclone/rclone_uc.conf > /dev/null\n",
+    "[rclone_s3]\n",
+    "type = s3\n",
+    "provider = Ceph\n",
+    "access_key_id = {ACCESS_KEY}\n",
+    "secret_access_key = {SECRET_KEY}\n",
+    "endpoint = {ENDPOINT}\n",
+    "EOF\n",
+    "\"\"\")"
+   ]
+  },
+  {
    "cell_type": "code",
    "execution_count": null,
    "metadata": {
@@ -369,7 +420,7 @@
    },
    "outputs": [],
    "source": [
-    "# Mounting the buckets using rclone \n",
+    "# mounting the buckets using rclone (note we are not mounting artifacts bucket)\n",
     "buckets = {\n",
     "    f'{project_name}-data': 'data',\n",
     "    f'{project_name}-mlflow-metrics': 'metrics'\n",
