@@ -36,8 +36,8 @@ _templates_suffix_to_ignore:
   - ".tar.gz"
 
 __skip_answered: false
-  # PROJECT CONFIGURATION
 
+# PROJECT CONFIGURATION
 setup_mode:
   type: str
   choices:
@@ -55,7 +55,7 @@ project_name:
     Project Name: A unique identifier for your project. This name will be used consistently across your setup, including:
 
     - Prefixes for S3 buckets (e.g., project-name-data`, project-name-mlflow-artifacts)  
-    - Names for compute resources (VMs or bare-metal leases) 
+    - Prefixes for your compute resources (VMs or bare-metal leases) 
 
     Rules:
     - May include uppercase or lowercase letters, numbers, hyphen (-), and underscore (_)
@@ -72,7 +72,7 @@ repo_url:
   help: |
     Git repository URL for your generated project.
     Recommendations:
-      1. Create a repository named exactly after your project-name it will host the generated material.
+      1. Create a repository
       2. Paste the repository URL here (HTTPS or SSH).
          Examples:
            - HTTPS: https://github.com/yourname/project-name
@@ -95,8 +95,7 @@ chameleon_site:
   default: CHI@TACC
   help: |
     Select the site where you want your compute resources(VMs or bare metal) to run.
-    This choice does not control where your S3 data buckets are stored — 
-    bucket storage location is set separately using the bucket_site option.
+    This choice does not control where your S3 data buckets are stored 
 
     Sites:
     - CHI@TACC: Texas Advanced Computing Center (most GPU bare metal nodes)
@@ -140,7 +139,6 @@ gpu_type:
     - any: No preference — use whichever GPU type is available
     - cpu: CPU-only nodes (no GPU, good for classical ML or lightweight workloads)
   when: "{{ setup_mode == 'Advanced' }}"
-
 
 ml_framework:
   type: str
