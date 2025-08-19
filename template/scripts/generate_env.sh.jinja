@@ -25,6 +25,9 @@ PROJECT_NAME={{ project_name }}
 # Get public IP
 HOST_IP=$(curl -s ifconfig.me)
 
+# GID for render group
+GID_RENDER=$(getent group render | cut -d: -f3)
+
 {% if include_huggingface %}
 # Hugging Face setup
 HF_HOME="/mnt/data/hf_cache"
