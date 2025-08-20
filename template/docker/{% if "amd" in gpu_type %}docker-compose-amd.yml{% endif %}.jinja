@@ -4,7 +4,6 @@ services:
     build:
       context: .
       dockerfile:
-
         {% if "pytorch" in ml_framework and "amd" in gpu_type %}
         Dockerfile.jupyter-rocm-pt
         {% elif "tensorflow" in ml_framework and "amd" in gpu_type %}
@@ -12,7 +11,6 @@ services:
         {% elif "sklearn" in ml_framework %}
         Dockerfile.jupyter-ds
         {% endif %}
-        
     container_name: jupyter
     ports: 
       - "8888:8888"
@@ -27,6 +25,7 @@ services:
       {% if include_huggingface %}
       - HF_HOME=${HF_HOME}
       - HF_TOKEN_PATH=${HF_TOKEN_PATH}
+      - HF_TOKEN=${HF_TOKEN}
       {% endif %}
     devices:
       - /dev/kfd:/dev/kfd

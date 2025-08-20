@@ -26,6 +26,7 @@ services:
       {% if include_huggingface %}
       - HF_HOME=${HF_HOME}
       - HF_TOKEN_PATH=${HF_TOKEN_PATH}
+      - HF_TOKEN=${HF_TOKEN}
       {% endif %}
     {% if "nvidia" in gpu_type %}
     runtime: nvidia
