@@ -140,6 +140,14 @@ docker compose --env-file ~/.env -f {{ project_name }}/docker/docker-compose-amd
 This will stop and remove the containers, but all your data in mounted volumes will remain safe.
 When you want to restart later, simply run the docker compose up command again (see Step 4).
 
+### pushing code to GitHub 
+once you have completed your first experiment run, you can push your code to GitHub. We've pre-installed the GitHub CLI in your container to make this easy.
+First, sync your account by running this command
+```sh
+gh auth login --hostname github.com --git-protocol https --web <<< $'Y\n'
+```
+follow the instruction and you are ready to git push
+
 ---
 
 ### 6. Clean Up Resources
