@@ -5,7 +5,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/a7med7x7/chamelab-cli)](https://github.com/a7med7x7/chamelab-cli/releases)
 
 
-> Use this template generator when you are ready to start a machine learning project on         [Chameleon Cloud](https://www.chameleoncloud.org), or if you want to integrate reproducible experiment tracking into your existing project.
+> Use this template generator when you are ready to start a machine learning project on [Chameleon Cloud](https://www.chameleoncloud.org), or if you want to integrate reproducible experiment tracking into your existing project.
 
 
 ## How to use this template generator to create a new project
@@ -64,7 +64,7 @@ the rest of the documentation shows what these options are and their implication
 			
             # when creating a server
 			s = server.Server(
-			f"node-{{ project_name }}-{username}"
+			f"{{ project_name }}-node-{username}"
 
         ```
 			
@@ -119,7 +119,7 @@ the rest of the documentation shows what these options are and their implication
 - configuring a server from a lease require the `gpu_type`, as different `gpus` have different setup process. 
 - `nvidia` and `amd` require different container images to. so your decision will result in selecting the appropriate [container images](https://github.com/A7med7x7/ReproGen/tree/dev/template/docker)
 - **Type:** Multi-choice - you can select multiple types. 
-- **Note**: when selecting `chemeleon_site` = KVM@TACC the GPU flavors run on nvidia hardware as there are no amd hardware. so this question is not going to be prompted when `chemeleon_site` = KVM@TACC
+- **Note**: when selecting `chemeleon_site` = KVM@TACC the GPU flavors run on NVIDIA hardware as there are no AMD hardware. so this question is not going to be prompted when `chemeleon_site` = KVM@TACC
 ---  
 
 ### `ml_framework`
@@ -139,12 +139,17 @@ the rest of the documentation shows what these options are and their implication
 ###### *work only under advanced and NVIDIA setup*
 
 - Choose the CUDA version that matches your code and driver requirements.
+    - cuda11-latest : highly compatible with most GPUs in chameleon cloud 
+    - cuda12-latest : The latest version designed to work with newer GPU architectures
+- **Type** select:
 ---
 ### `include_huggingface` 
 ###### *work only under advanced* 
 
 - If enabled, configures the environment to include a hugging face token for seamless Hugging Face Hub access.
-
+- When configuring servers you will be prompted to enter a [Hugging Face Token](https://huggingface.co/settings/tokens) 
+- All models/datasets downloaded from Hugging Face will be stored on the mounted point `/mnt/data/`
+- **Type** bool
 #### Acknowledgements
 
 This project was supported by the 2025 [Summer of Reproducibility](https://ucsc-ospo.github.io/sor/).
