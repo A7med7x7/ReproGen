@@ -55,6 +55,7 @@ chmod 600 "$HF_TOKEN_PATH"
   echo "S3_ENDPOINT_URL=${S3_ENDPOINT_URL}"
   {% if include_huggingface %}echo "HF_HOME=${HF_HOME}"{% endif %}
   {% if include_huggingface %}echo "HF_TOKEN_PATH=${HF_TOKEN_PATH}"{% endif %}
+  {% if include_huggingface %}echo "HF_TOKEN=${HF_TOKEN}"{% endif %}
 } > "$ENV_FILE"
 
 
