@@ -56,7 +56,7 @@
    "source": [
     "## Authentication for Object Store\n",
     "\n",
-    "This step is only used to **authenticate JupyterHub with the object store**.  \n",
+    "This step is used to **authenticate JupyterHub with the object store**.  \n",
     "Since our JupyterHub session already has the necessary Chameleon credentials,\n",
     "we don’t type in usernames or passwords here.  \n",
     "\n",
@@ -128,6 +128,53 @@
     "1. Log in to [Chameleon Horizon](https://chi.{% if bucket_site == 'CHI@TACC' %}tacc{% elif bucket_site == 'CHI@UC' %}uc{% elif bucket_site == 'auto' and chameleon_site == 'CHI@UC' %}uc{% else %}tacc{% endif %}.chameleoncloud.org)\n",
     "2. In the left-hand menu, go to **Project → Object Store → Containers**.\n",
     "3. You should see the buckets you just created here."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "446075e4",
+   "metadata": {},
+   "source": [
+    "### Create application credentials\n",
+    "if we want our compute instance or script (MLflow, rclone, or a data pipeline) to have write access to the Chameleon object store, it needs to authenticate.\n",
+    "instead of using your personal username + password (which is unsafe and interactive), we create an application credential:\n",
+    "\n",
+    "the following script will generate that for us or you can head to create it using the GUI: \n",
+    "\n",
+    "#### USING GUI \n",
+    "go over the the chameleon cloud [Horizon GUI](https://chi.{% if chameleon_site == 'CHI@TACC' %}tacc{% elif chameleon_site == 'CHI@UC' %}uc{% elif chameleon_site == 'KVM@TACC' %}tacc{% endif %}.chameleoncloud.org/project/)\n",
+    "- enter to the horizon GUI \n",
+    "- in the menu sidebar on the left side of the Horizon GUI, click “Identity”\n",
+    "- select \"Application Credentials\" \n",
+    "- click “Create Application Credential”.\n",
+    "\n",
+    "#### if using GUI \n",
+    "You will not be able to view the secret again from the Horizon GUI. Then, click “Download openrc file” to have another copy of the secret.\n",
+    "\n",
+    "#### note \n",
+    "Copy the “ID” and “Secret” displayed in the dialog, and save them in a safe place, in this notebook you want to make sure to clear your cell output before pushing it pubicly "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "12a212e8",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "user = os_conn.current_user_id\n",
+    "\n",
+    "# create application credential\n",
+    "app_cred = os_conn.identity.create_application_credential(\n",
+    "    user=user,\n",
+    "    name=\"rclone_swift_access\",\n",
+    "    description=\"Created via notebook using python-chi\",\n",
+    "    unrestricted=False\n",
+    ")\n",
+    "\n",
+    "print(\"Application Credential ID:\", app_cred.id)\n",
+    "print(\"Application Credential Secret:\", app_cred.secret)\n",
+    "print(\"User ID:\", user)   "
    ]
   }
  ],
