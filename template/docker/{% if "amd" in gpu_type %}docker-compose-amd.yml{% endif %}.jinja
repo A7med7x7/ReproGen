@@ -24,8 +24,10 @@ services:
       - PYTHONPATH=/home/jovyan/work/{{ project_name }}
       - MLFLOW_TRACKING_URI=http://mlflow:8000
       - AMD_VISIBLE_DEVICES=all
+      {% if include_huggingface %}
       - HF_HOME=${HF_HOME}
       - HF_TOKEN_PATH=${HF_TOKEN_PATH}
+      {% endif %}
     devices:
       - /dev/kfd:/dev/kfd
       - /dev/dri:/dev/dri   
@@ -54,7 +56,7 @@ services:
       - mlflow
       - server
       - --backend-store-uri=/mlflow/mlruns
-      - --artifacts-destination=s3://MLflow_amd-mlflow-artifacts
+      - --artifacts-destination=s3://{{ project_name }}-mlflow-artifacts
       - --serve-artifacts
       - --host=0.0.0.0
       - --port=8000
