@@ -156,6 +156,7 @@ ml_framework:
 
 cuda_version:
   type: str
+  default: "{{ 'cuda11-latest' if setup_mode == 'Basic' }}"
   help: "What CUDA version you plan to use with your Jupyter image (more recent: cuda-12, older legacy GPU compatibility: cuda-11)"
   choices:
     - cuda11-latest

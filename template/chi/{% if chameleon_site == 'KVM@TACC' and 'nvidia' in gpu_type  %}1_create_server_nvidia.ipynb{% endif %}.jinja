@@ -334,19 +334,7 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "We created our buckets earlier in the notebook  [0_create_buckets.ipynb](0_create_buckets.ipynb). To access and manage the data on our GPU compute node, we are going to use rclone, a powerful command-line tool that allows you to interact with our object storage systems like Chameleon object store service. \n",
-    "we first need to install rclone"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {
-    "tags": []
-   },
-   "outputs": [],
-   "source": [
-    "s.execute(\"curl https://rclone.org/install.sh | sudo bash\") "
+    "We created our buckets earlier in the notebook  [0_create_buckets.ipynb](0_create_buckets.ipynb). To access and manage the data on our GPU compute node, we are going to use rclone, a powerful command-line tool that allows you to interact with our object storage systems like Chameleon object store service. "
    ]
   },
   {
@@ -397,7 +385,7 @@
    "source": [
     "ACCESS_KEY = getpass.getpass(\"Enter your S3 access key: \")\n",
     "SECRET_KEY = getpass.getpass(\"Enter your S3 secret key: \")\n",
-    "END_POINT = {% if bucket_site == 'CHI@TACC' %}\"https://chi.tacc.chameleoncloud.org:7480/swift/v1/AUTH_477960c4206444c3a77b9e4ffa281ade\"{% endif %}{% if bucket_site == 'CHI@UC' %}\"https://chi.uc.chameleoncloud.org:7480/swift/v1/AUTH_c819e73b9bfd4c0595bf49dcf338d51b\"{% endif %}{% if bucket_site == 'auto' %}\"https://chi.tacc.chameleoncloud.org:7480/swift/v1/AUTH_477960c4206444c3a77b9e4ffa281ade\"{% endif %}\n",
+    "END_POINT = {% if bucket_site == 'CHI@TACC' %}\"https://chi.tacc.chameleoncloud.org:7480\"{% endif %}{% if bucket_site == 'CHI@UC' %}\"https://chi.uc.chameleoncloud.org:7480\"{% endif %}{% if bucket_site == 'auto' %}\"https://chi.tacc.chameleoncloud.org:7480\"{% endif %}\n",
     "\n",
     "s.execute(f\"\"\"\n",
     "sudo rm -rf ~/.config\n",
