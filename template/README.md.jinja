@@ -22,16 +22,16 @@ The `chi` directory in your newly created project automates setting up data buck
 In [Chameleon JupyterHub](https://jupyter.chameleoncloud.org/hub/), clone your new project and open the `chi` directory.
 
 ```sh 
-git clone {{ repo_url }}
+git clone {{ repo_url }} {{ project_name }}
 ```
 
-### First run only: Create object store buckets
+### 1. First run only: Create object store buckets
 
 At the beginning of your project, you will create buckets in Chameleon's object store, to hold datasets, metrics, and artifacts from experiment runs. Unlike data saved to the ephemeral local disk of the compute instance, this data will persist beyond the lifetime of the compute instance.
 
 Inside the `chi` directory, run the notebook [`0_create_buckets.ipynb`](chi/0_create_buckets.ipynb) to create these buckets.
 
-### Launching a compute instance
+### 2. Launching a compute instance
 
 When you need to work on your project, you will launch a compute instance on Chameleon Cloud.
 
@@ -61,9 +61,11 @@ Then, to provision your server and configure it for your project, you will run:
 
 ---
 
-### Configure and start your Jupyter environment
+3. ### Configure and start your Jupyter environment
 
-On your computer instance (SSH-ing from your local machine via shell), generate the `.env` file required for Docker Compose:
+{% if env_setup_mode == 'ssh' and setup_mode != 'Basic' %}
+
+On your computer instance (SSH-ing from your local machine via shell), generate the `.env` file required for docker compose:
 From your **home directory** (`~`), run:
 
 ```sh
@@ -74,9 +76,33 @@ you will be prompted to enter your HuggingFace Token,after inputting.
 you should see something like:
 
 `✅ The .env file has been generated successfully at : /home/cc/.env`
+{% else %}
+
+Open the Jupyter [notebook]({{ project_name }}/chi/1_create_server.ipynb
+) in the chi directory inside your project:
+
+Follow the instructions in the notebook to generate the .env file and configure your docker compose environment.
+
+This approach is fully browser-based and guided, so you don’t need to SSH.
+{% endif %}
 
 ---
 
+### 3.5.  (Optional) Add your Python dependencies
+
+Before building your Jupyter environment, you can include any third-party python dependencies by editing:
+your [requirements.txt]({{ project_name }}/docker/requirements.txt) file. 
+Inside this file you’ll see one pinned packages for now. 
+```txt 
+datasets
+```
+which is a python library from HuggingFace used to download datasets from 
+- To add a package: simply add it to the list in new line (e.g. LightGBM) or (LightGBM==4.6.0).
+- To remove a package: delete its line.
+- To update a version: change the version number.
+
+---
+### 4. Run your containerized environment 
 From your **home directory** (`~`), run:
 {% if "nvidia" in gpu_type or "cpu in gpu_type"%}
 ```sh
@@ -92,7 +118,7 @@ docker compose --env-file ~/.env -f {{ project_name }}/docker/docker-compose-amd
 {% endif %}
 ---
 
-### Login to Jupyter Lab and MLFlow UI
+### 4.5 Login to Jupyter Lab and MLFlow UI
 
 after your build finished, with the output 
 
@@ -106,22 +132,22 @@ after your build finished, with the output
  ```
 
 you can access your Jupyter Lab and MLflow UI 
-1. Access your jupyter: you can grab the token from running image using the command:
+    1. Access your jupyter: you can grab the token from running image using the command:
 
-```sh
-docker exec jupyter jupyter server list | tail -n 1 | cut -f1 -d" " | sed "s/localhost/$(curl -s ifconfig.me)/"
-```
+    ```sh
+    docker exec jupyter jupyter server list | tail -n 1 | cut -f1 -d" " | sed "s/localhost/$(curl -s ifconfig.me)/"
+    ```
 
-Open the printed URL in your browser.
-2. Access MLflow UI 
+    Open the printed URL in your browser.
+    2. Access MLflow UI 
 
-```sh
-echo "http://$(curl -s ifconfig.me):$(docker port mlflow 8000 | cut -d':' -f2)"
+    ```sh
+    echo "http://$(curl -s ifconfig.me):$(docker port mlflow 8000 | cut -d':' -f2)"
 
-```
+    ```
 Open this URL in your browser to see your experiments and logs.
 
-### 5.5. Stop the Containerized Environment
+### 5  Stop the Containerized Environment
 
 If you’d like to pause your environment, you can stop the running containers with the command:
 {% if "nvidia" in gpu_type or "cpu in gpu_type"%}
@@ -140,7 +166,7 @@ docker compose --env-file ~/.env -f {{ project_name }}/docker/docker-compose-amd
 This will stop and remove the containers, but all your data in mounted volumes will remain safe.
 When you want to restart later, simply run the docker compose up command again (see Step 4).
 
-### pushing code to GitHub 
+### 5.5 pushing code to GitHub 
 once you have completed your first experiment run, you can push your code to GitHub. We've pre-installed the GitHub CLI in your container to make this easy.
 First, sync your account by running this command
 ```sh
