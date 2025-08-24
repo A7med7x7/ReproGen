@@ -92,11 +92,11 @@ This approach is fully browser-based and guided, so you don’t need to SSH.
 
 Before building your Jupyter environment, you can include any third-party python dependencies by editing:
 your [requirements.txt]({{ project_name }}/docker/requirements.txt) file. 
-Inside this file you’ll see one pinned packages for now. 
+Inside this file it might look something like this. 
 ```txt 
-datasets
+package0 
+package1==1.5.0
 ```
-which is a python library from HuggingFace used to download datasets from 
 - To add a package: simply add it to the list in new line (e.g. LightGBM) or (LightGBM==4.6.0).
 - To remove a package: delete its line.
 - To update a version: change the version number.
