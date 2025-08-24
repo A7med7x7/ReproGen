@@ -163,6 +163,23 @@ cuda_version:
     - cuda12-latest
   when: "{{ (('pytorch' in ml_framework) or ('pytorch-lightning' in ml_framework)) and ('nvidia' in gpu_type) and (setup_mode == 'Advanced') }}"
 
+env_setup_mode:
+  type: str
+  help: |
+    how would you like to configure your server (`.env` file geenration running docker compose..etc?
+    
+    - **SSH**: SSH into your reserved compute instance and follow the README instructions
+      This is the most common approach. 
+    
+    - **Notebook**: stay inside Chameleon JupyterHub and use a Jupyter notebook
+      to configure your server. This is the handy approach. 
+    
+    Choose the option that best fits you.
+  choices:
+    - ssh
+    - notebook
+  default: "{{ 'notebook' if setup_mode == 'Basic' }}"
+
 include_huggingface:
   type: bool
   default: true
