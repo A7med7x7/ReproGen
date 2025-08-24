@@ -143,6 +143,20 @@ the rest of the documentation shows what these options are and their implication
     - cuda12-latest : The latest version designed to work with newer GPU architectures
 - **Type** select:
 ---
+### `env_setup_mode`
+###### *work only under advanced* 
+How would you like to configure your server (.env file generation & docker compose setup)?
+You have two options:
+- **SSH** : 
+SSH into your reserved compute instance and follow the README instructions to generate the .env file and launch your docker compose environment.
+- **Notebook**: 
+stay inside Chameleon JupyterHub and use a notebook (2_configure_server.ipynb) provided in the chi directory to configure your server.
+This approach is more guided and beginner-friendly.
+- both methods generate the same .env file and launch the same docker compose environment.
+The only difference is where you perform the steps: via SSH (manual control) or Notebook (fully browser-based).
+- **Type**: select
+- **Default**: `"notebook"` if `setup_mode == 'Basic'`
+---
 ### `include_huggingface` 
 ###### *work only under advanced* 
 
