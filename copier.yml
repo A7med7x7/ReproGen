@@ -179,6 +179,8 @@ env_setup_mode:
     - ssh
     - notebook
   default: "{{ 'notebook' if setup_mode == 'Basic' }}"
+  when: "{{ setup_mode == 'Advanced' }}"
+
 
 include_huggingface:
   type: bool
