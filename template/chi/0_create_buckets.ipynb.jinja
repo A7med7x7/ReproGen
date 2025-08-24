@@ -13,11 +13,11 @@
     "  - `{{ project_name }}-mlflow-artifacts`: for model checkpoints, images, etc.\n",
     "\n",
     "\n",
-    "The notebook cells uses [swiftclient](https://docs.openstack.org/python-swiftclient/latest/) + [python-chi](https://python-chi.readthedocs.io/en/latest/index.html) \n",
-    "to automate object store bucket creation on Chameleon\n",
+    "The notebook cells uses [openstack](https://docs.openstack.org/mitaka/user-guide/sdk.html) [swiftclient](https://docs.openstack.org/python-swiftclient/latest/), and [python-chi](https://python-chi.readthedocs.io/en/latest/index.html) \n",
+    "to automate object store bucket creation on Chameleon Cloud and create generate credentials for us to be able to mount and write to the object store containers later. \n",
     "\n",
     "###  Prerequisites\n",
-    "- This notebook assumes that You must be logged into Chameleon JupyterHub and you run the following cells there ."
+    "- This notebook assumes that You must be logged into Chameleon JupyterHub and you run the following cells there."
    ]
   },
   {
@@ -30,9 +30,10 @@
    "outputs": [],
    "source": [
     "#Import required packages\n",
+    "from openstack import connection\n",
     "from chi import context\n",
     "import swiftclient\n",
-    "import chi"
+    "import chi, os"
    ]
   },
   {
@@ -56,12 +57,10 @@
    "source": [
     "## Authentication for Object Store\n",
     "\n",
-    "This step is used to **authenticate JupyterHub with the object store**.  \n",
-    "Since our JupyterHub session already has the necessary Chameleon credentials,\n",
-    "we don’t type in usernames or passwords here.  \n",
+    "our our JupyterHub session already has the necessary Chameleon credentials, so we don’t type in usernames or passwords.  \n",
     "\n",
     "The code below simply asks JupyterHub for a valid **token** and the **object store\n",
-    "endpoint**, and then uses them to connect with our object store services to create the buckets"
+    "endpoint**, and then uses them to connect with our object store services to create the buckets that will store our data"
    ]
   },
   {
@@ -90,9 +89,9 @@
    "source": [
     "## Creat buckets for our project\n",
     "\n",
-    "Here we create our **three buckets** in the object store:  \n",
+    "Here we create our **three buckets**:  \n",
     "\n",
-    "Later in the workflow, MLflow will be configured to **write metrics to the metrics bucket** and **upload artifacts (models, plots, etc.) to the artifacts bucket**, while you can upload or download datasets from the data bucket.  "
+    "Later , MLflow will be configured to **write metrics to the metrics bucket via a local mount** and **upload artifacts (models, plots, etc.) to the artifacts bucket directly**, while you can upload or download datasets from the data bucket.  "
    ]
   },
   {
@@ -123,7 +122,7 @@
    "source": [
     "### You can check your buckets in Horizon GUI\n",
     "\n",
-    "Now that your S3 buckets are created, you can verify them in the Chameleon Horizon interface.\n",
+    "Now that buckets are created, you can verify them in the Chameleon Horizon interface.\n",
     "\n",
     "1. Log in to [Chameleon Horizon](https://chi.{% if bucket_site == 'CHI@TACC' %}tacc{% elif bucket_site == 'CHI@UC' %}uc{% elif bucket_site == 'auto' and chameleon_site == 'CHI@UC' %}uc{% else %}tacc{% endif %}.chameleoncloud.org)\n",
     "2. In the left-hand menu, go to **Project → Object Store → Containers**.\n",
@@ -175,6 +174,38 @@
     "print(\"Application Credential ID:\", app_cred.id)\n",
     "print(\"Application Credential Secret:\", app_cred.secret)\n",
     "print(\"User ID:\", user)   "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "74ae9d7e",
+   "metadata": {},
+   "source": [
+    "# Generate EC2 credentials\n",
+    "\n",
+    "This cell requests **EC2-style credentials** (Access + Secret) for the **current user/project** in openstack.  by calling Keystone’s `/v3/users/{user_id}/credentials/OS-EC2` API. and then print out an `access` and `secret` key pair."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "34abc1cd",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "conn = connection.from_config()\n",
+    "\n",
+    "project_id = conn.current_project_id \n",
+    "identity_ep = conn.session.get_endpoint(service_type='identity', interface='public')\n",
+    "url = f\"{identity_ep}/v3/users/{conn.current_user_id}/credentials/OS-EC2\"\n",
+    "ID = {\"tenant_id\": project_id}\n",
+    "\n",
+    "response = conn.session.post(url, json=ID)\n",
+    "response.raise_for_status()\n",
+    "ec2 = response.json()[\"credential\"]\n",
+    "\n",
+    "print(\"EC2 Access:\", ec2[\"access\"])\n",
+    "print(\"EC2 Secret:\", ec2[\"secret\"])"
    ]
   }
  ],
