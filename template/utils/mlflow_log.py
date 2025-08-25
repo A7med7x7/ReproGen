@@ -26,7 +26,7 @@ def log_nvidia_gpu():
             mlflow.set_tag("gpu_status", f"NVML error: {str(nvml_err)}")
             return
         except Exception as e:
-            mlflow.set_tag("gpu_shutdown", f"warning: {str(shutdown_err)}")
+            mlflow.set_tag("gpu_shutdown", f"warning: {str(e)}")
             return
 
         try:
@@ -45,11 +45,32 @@ def log_nvidia_gpu():
             mlflow.set_tag("gpu_shutdown", f"warning: {str(shutdown_err)}")
 
 def log_amd_gpu():
-    pass
+    """
+    This function logs the GPU count. and rocm-smi output
+    """
+    
+    try:
+        smi_output = subprocess.check_output(
+            ["rocm-smi"], text=True
+        )
+        mlflow.log_text(smi_output, artifact_file="amd_gpu_info.txt")
 
+        try:
+            gpu_count = sum(1 for line in smi_output.splitlines() if line.strip() and line.strip().split()[0].isdigit())
+            mlflow.set_tag("gpu_count", gpu_count)
+        except Exception:
+            pass
+    except FileNotFoundError:
+        mlflow.set_tag("gpu_status", "rocm-smi not found")
+    except subprocess.CalledProcessError as e:
+        mlflow.set_tag("gpu_status", f"rocm-smi failed: {e}")
+    except Exception as e:
+        mlflow.set_tag("gpu_status", f"unexpected AMD error: {str(e)}")
+        
 def log_gpu():
     """
     Detects GPU type and logs info accordingly.
+    tries NVIDIA first (if available), then AMD.
     """
     try:
         # NVIDIA 
@@ -69,9 +90,6 @@ def log_gpu():
         except FileNotFoundError:
             mlflow.set_tag("gpu_status", "No NVIDIA or AMD GPU tools found")
             return
-
-    except Exception as e:
-        mlflow.set_tag("gpu_status", f"auto-detect error: {str(e)}")
 
 def log_python():
     """
