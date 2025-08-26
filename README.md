@@ -4,46 +4,62 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/a7med7x7/chamelab-cli)](https://github.com/a7med7x7/chamelab-cli/releases)
 
-
+> [!INFO]
 > Use this template generator when you are ready to start a machine learning project on [Chameleon Cloud](https://www.chameleoncloud.org), or if you want to integrate reproducible experiment tracking into your existing project.
 
 
 ## How to use this template generator to create a new project
 
-###  Requirements
+This repository is not intended to be cloned or forked directly. use Copier to generate a project from the template, which will prompt you for configuration.
+
+you will learn more about his in **[Getting Started](#getting-started)** 
+---
+## Requirements
 
 - [Chameleon Cloud account](https://www.chameleoncloud.org)
-- **[Python](https://www.python.org/downloads/)** ≥ 3.8
-- **[Copier](https://copier.readthedocs.io/en/stable/)** ≥ 9.0
+- [Python](https://www.python.org/downloads/)
+- [Copier](https://copier.readthedocs.io/en/stable/)
+
+> [!Caution]
+> If you have python pre-installed on your machine, make sure its version ≥ 3.8 and Copier ≥ 9.0
 
 ---
 
-###  Installation
+##  Installation
 
 Install Copier
 
 ```sh
-pip install copier
+pipx install copier
 ```
 
 or 
 ```sh
-pipx install copier 
+pip install copier 
 ```
+> [!NOTE]
+> You can also install Copier using regular [pip](https://pip.pypa.io/en/stable/getting-started/). however, this will place it in your main Python environment, which may lead to dependency conflicts (that you don't want). using [pipx](https://pipx.pypa.io/stable/installation/) is recommended instead, since it installs Copier in its own isolated environment.
 
 ---
 
-## Quick Start
+## Getting Started
 
 Create a New Project with 
 ```sh
-copier copy --vcs-ref dev https://github.com/A7med7x7/reprogen.git my_project_name
+copier copy --vcs-ref dev https://github.com/A7med7x7/reprogen.git path/to/destination
 ```
-* replace my_project_name with the name of the directory you want
-* Answer a few questions
+> [!IMPORTANT]
+> Ensure that `path/to/destination` points to an empty directory, and replace `path/to/destination` with the name of the path and directory you want
 
-Then, you're ready to use your new project!
+Answer a few questions, and Copier will generate the project in that directory.See **[Setup Parameters and Their Roles](#setup-parameters-and-their-roles)** below if you want to know the role of the questions and what they will generate. 
 
+> [!TIP]
+> If you're new to Chameleon Cloud, we recommend using `Basic` in [setup mode](#setup_mode). It's beginner-friendly!
+---
+### Follow your README.md 
+When the project is generated, a README.md file will be created at the root.it contains all the instructions to guide you through the setting your environment.
+
+---
 ## Setup Parameters and Their Roles
 your answers will generate a project based on your input values, below you can find the variables with their description and implications  
 
