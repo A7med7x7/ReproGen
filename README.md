@@ -21,7 +21,7 @@ you will learn more about his in **[Getting Started](#getting-started)**
 - [Copier](https://copier.readthedocs.io/en/stable/)
 
 > [!Caution]
-> If you have python pre-installed on your machine, make sure its version ≥ 3.8 and Copier ≥ 9.0
+> If you have Python pre-installed on your machine, make sure its version is≥ 3.8 and Copier ≥ 9.0
 
 ---
 
@@ -51,30 +51,30 @@ copier copy --vcs-ref dev https://github.com/A7med7x7/reprogen.git path/to/desti
 > [!IMPORTANT]
 > Ensure that `path/to/destination` points to an empty directory, and replace `path/to/destination` with the name of the path and directory you want
 
-Answer a few questions, and Copier will generate the project in that directory.See **[Setup Parameters and Their Roles](#setup-parameters-and-their-roles)** below if you want to know the role of the questions and what they will generate. 
+Answer a few questions, and Copier will generate the project in that directory. See **[Setup Parameters and Their Roles](#setup-parameters-and-their-roles)** below if you want to know the role of the questions and what they will generate. 
 
 > [!TIP]
 > If you're new to Chameleon Cloud, we recommend using `Basic` in [setup mode](#setup_mode). It's beginner-friendly!
 ---
 ### Follow your README.md 
-When the project is generated, a README.md file will be created at the root.it contains all the instructions to guide you through the setting your environment.
+When the project is generated, a README.md file will be created at the root.it contains all the instructions to guide you through setting your environment.
 
 ---
 ## Setup Parameters and Their Roles
-your answers will generate a project based on your input values, below you can find the variables with their description and implications  
+Your answers will generate a project based on your input values, below you can find the variables with their description and implications  
 
 ### `setup_mode`
 Defines the overall setup approach for your environment. tweak the customization you want during server and Docker environment creation.
 - **Basic**: minmal prompts. you will be asked to input your project name ([`project_name`](#project_name)), remote repository link ([`repo_url`](#repo_url)) and framework of your choice ([`ml_framework`](#ml_framework)) it recommend defaults for most options.
-- **Advanced**: Lets you control Compute site ([chameleon_site](#chameleon_site)), GPU type ([`gpu_type`](#gpu_type)), CUDA version ([`cuda_version](#cuda_version)), storage site ([`bucket_site`](#bucket_site))
-the rest of the documentation shows what these options are and their implications 
+- **Advanced**: Lets you control Compute site ([chameleon_site](#chameleon_site)), GPU type ([`gpu_type`](#gpu_type)), CUDA version ([`cuda_version`](#cuda_version)), storage site ([`bucket_site`](#bucket_site))
+The rest of the documentation shows what these options are and their implications 
 - **Type**: Single-select
 - **Default**: "Basic"
 --- 
 ### `project_name`
 
 - We recommend setting `project name` as the prefix for the lease name 
-- it is used everywhere your project is referenced:   
+- It is used everywhere your project is referenced:   
     - object store names (e.g., `project-name-data`, `project-name-mlflow-artifacts`)
     - Compute instances /servers are going to include the `project_name` as their prefix 
     
@@ -141,11 +141,11 @@ The site where your leases at, and compute resources will be provisioned.
 ### `ml_framework`
 
 - Selects the primary ML/deep learning framework for your environment.
-- It will decide which container image to include and use for your jupyter lab. 
-- custom training code for the selected `ml_framework` will be generated
+- It will decide which container image to include and use for your Jupyter Lab. 
+- Custom training code for the selected `ml_framework` will be generated
 - **pytorch** – Flexible, widely used deep learning library. Supports CUDA (NVIDIA) and ROCm (AMD).
 - **pytorch-lightning** – High-level wrapper for PyTorch that simplifies training loops. Supports CUDA (NVIDIA) and ROCm (AMD).
-- **tensorflow** – Popular deep learning library with strong ecosystem. 
+- **tensorflow** – Popular deep learning library with a strong ecosystem. 
 - **scikit-learn** –  Machine Learning and data science stack (pandas, scikit-learn, matplotlib, etc.) without deep learning frameworks.
 - **Note**: _PyTorch_ and _PyTorch Lightning_ will prompt for CUDA/ROCm version if you select GPU types.
 - **Type** Multi-choice: you can select multiple frameworks. 
@@ -155,7 +155,7 @@ The site where your leases at, and compute resources will be provisioned.
 ###### *work only under advanced and NVIDIA setup*
 
 - Choose the CUDA version that matches your code and driver requirements.
-    - cuda11-latest : highly compatible with most GPUs in chameleon cloud 
+    - cuda11-latest : highly compatible with most GPUs in Chameleon Cloud 
     - cuda12-latest : The latest version designed to work with newer GPU architectures
 - **Type** select:
 ---
@@ -176,7 +176,7 @@ The only difference is where you perform the steps: via SSH (manual control) or 
 ### `include_huggingface` 
 ###### *work only under advanced* 
 
-If enabled, it configures the environment to include a hugging face token for seamless Hugging Face Hub access and caching of models/datasets . 
+If enabled, it configures the environment to include a HuggingFace token for seamless Hugging Face Hub access and caching of models/datasets . 
 - During server setup you will be prompted to enter a [Hugging Face Token](https://huggingface.co/settings/tokens) 
 - All models/datasets downloaded from Hugging Face will be stored on the mounted point `/mnt/data/`
 - **Type**: bool
