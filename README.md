@@ -64,50 +64,50 @@ When the project is generated, a README.md file will be created at the root.it c
 your answers will generate a project based on your input values, below you can find the variables with their description and implications  
 
 ### `setup_mode`
-
-- **Basic**: minmal prompts. you will be asked to input your project_name, remote repository link and framework of your choice it recommend defaults for most options.
-- **Advanced**: Lets you control Compute site, GPU type, CUDA/ROCm version, storage site
+Defines the overall setup approach for your environment. tweak the customization you want during server and Docker environment creation.
+- **Basic**: minmal prompts. you will be asked to input your project name ([`project_name`](#project_name)), remote repository link ([`repo_url`](#repo_url)) and framework of your choice ([`ml_framework`](#ml_framework)) it recommend defaults for most options.
+- **Advanced**: Lets you control Compute site ([chameleon_site](#chameleon_site)), GPU type ([`gpu_type`](#gpu_type)), CUDA version ([`cuda_version](#cuda_version)), storage site ([`bucket_site`](#bucket_site))
 the rest of the documentation shows what these options are and their implications 
-
+- **Type**: Single-select
+- **Default**: "Basic"
 --- 
 ### `project_name`
+
 - We recommend setting `project name` as the prefix for the lease name 
 - it is used everywhere your project is referenced:   
-    - S3 bucket names (e.g., `project-name-data`, `project-name-mlflow-artifacts`)
-    - Compute instances /servers are going to include the `project_name` in default format 
+    - object store names (e.g., `project-name-data`, `project-name-mlflow-artifacts`)
+    - Compute instances /servers are going to include the `project_name` as their prefix 
     
         ```python
-			
             # when creating a server
 			s = server.Server(
 			f"{{ project_name }}-node-{username}"
-
         ```
 			
      
 	- Your material on the compute instance will be under a directory named after your `project_name`
-    - The containerized environment will look for a directory with the `project_name`
-     directory named after your `project_name`
-	- Some commands and scripts assume a unified `project_name`
-- **Rules**:Oonly letters, numbers, hyphen (-), and underscore (_). no spaces.
+    - The containerized environment will look for a directory with the `project_name` directory 
+	- most commands and scripts assume a unified `project_name`
+- **Rules**: only letters, numbers, hyphen (-), and underscore (_). no spaces.
 - **Tip**: Choose something short and memorable — remember this will show up in multiple commands and URLs
-- **Type:** select
+- **Type:** str
 
 ---
 
 ### `repo_url`
 
-- The Git repository where the generated project will live, we recommend creating  a remote repository (e.g [GitHub](github.com) or [GitLab](gitlab.com)). 
+- The remote Git repository where the generated project will live, we recommend creating a remote repository (e.g [GitHub](github.com) or [GitLab](gitlab.com)). 
 - Accepts HTTPS or SSH URLs (e.g., `https://github.com/user/repo.git` or `git@gitlab.com:user/repo.git`).
-- After having your project generated, you need to push the code there. (see [Github](https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github) / [Gitlabl](https://forum.gitlab.com/t/how-do-i-push-a-project-to-a-newly-created-git-repo-on-gitlab/68426) Guide)
+- After having your project generated, you need to push the code there. (see [Github](https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github) / [Gitlabl](https://forum.gitlab.com/t/how-do-i-push-a-project-to-a-newly-created-git-repo-on-gitlab/68426) Guide on pushing code to remote repo)
 - **Type:** string
 
 ---
 
 ### `chameleon_site`
 
-- The site where your leases at and compute resources will be provisioned. 
-- This Doesn’t control persistent storage storage location (that’s `bucket_site`).
+The site where your leases at, and compute resources will be provisioned. 
+- This doesn’t control persistent storage storage location (that’s [`bucket_site`](#bucket_site)).
+#### **options**
 - CHI@TACC → Most GPU bare metal nodes.
 - CHI@UC → University of Chicago resources.
 - KVM@TACC → VM(Virtual Machines )-based compute at TACC.
@@ -118,24 +118,24 @@ the rest of the documentation shows what these options are and their implication
 ### `bucket_site`
 ###### *work only under advanced*
 
-- This is where your [object storage contrainers](https://chameleoncloud.readthedocs.io/en/latest/technical/swift/index.html#object-store) (S3 Buckets) for you project will live.
+- This is where your [object storage contrainers](https://chameleoncloud.readthedocs.io/en/latest/technical/swift/index.html#object-store) for you project will live.
 #### **options**
 
 - CHI@TACC: Texas Advanced Computing Center
 - CHI@UC: University of Chicago
-- **auto** is usually the best choice unless you have a reason to store data in a specific  location. if matches your selected `chameleon_site` if object storage containers are available, if not it defaults to CHI@TACC site. 
-- **Note**: note that if your `chamleon_site` for the compute resources is different than your `bucket_site` further configuration might be needed. (placeholder until I update this)
+- **auto** is usually the best choice unless you have a reason to store data in a specific  location. it matches your selected `chameleon_site` if object storage containers are available, if not it defaults to CHI@TACC site. 
 - **Type:** select
 
 --- 
 ### `gpu_type`
 ###### *work only under advanced*
 
-- The type of GPU (or CPU-only) you want to configure. this assumes that you have reserved a node and you know which type it is AMD, NVIDIA or CPU.
+- The type of GPU (or CPU-only) node you want to create and configure. this assumes that you have reserved a node and you know which type it is AMD, NVIDIA or CPU.
 - configuring a server from a lease require the `gpu_type`, as different `gpus` have different setup process. 
 - `nvidia` and `amd` require different container images to. so your decision will result in selecting the appropriate [container images](https://github.com/A7med7x7/ReproGen/tree/dev/template/docker)
 - **Type:** Multi-choice - you can select multiple types. 
-- **Note**: when selecting `chemeleon_site` = KVM@TACC the GPU flavors run on NVIDIA hardware as there are no AMD hardware. so this question is not going to be prompted when `chemeleon_site` = KVM@TACC
+- **Note**: when selecting `chemeleon_site` = KVM@TACC the GPU flavors run on NVIDIA hardware as there are no AMD variant. 
+
 ---  
 
 ### `ml_framework`
@@ -176,10 +176,13 @@ The only difference is where you perform the steps: via SSH (manual control) or 
 ### `include_huggingface` 
 ###### *work only under advanced* 
 
-- If enabled, configures the environment to include a hugging face token for seamless Hugging Face Hub access.
-- When configuring servers you will be prompted to enter a [Hugging Face Token](https://huggingface.co/settings/tokens) 
+If enabled, it configures the environment to include a hugging face token for seamless Hugging Face Hub access and caching of models/datasets . 
+- During server setup you will be prompted to enter a [Hugging Face Token](https://huggingface.co/settings/tokens) 
 - All models/datasets downloaded from Hugging Face will be stored on the mounted point `/mnt/data/`
-- **Type** bool
+- **Type**: bool
+
+---
+
 #### Acknowledgements
 
 This project was supported by the 2025 [Summer of Reproducibility](https://ucsc-ospo.github.io/sor/).
