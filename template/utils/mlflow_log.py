@@ -78,7 +78,7 @@ def log_gpu():
             try:
                 log_nvidia_gpu()
                 return
-            except:
+            except Exception:
                 pass
 
         # AMD
@@ -91,6 +91,9 @@ def log_gpu():
             mlflow.set_tag("gpu_status", "No NVIDIA or AMD GPU tools found")
             return
 
+    except Exception as e:
+        mlflow.set_tag("gpu_status", f"unexpected GPU detection error: {e}")
+        
 def log_python():
     """
     This function logs the Python version, platform information, 
