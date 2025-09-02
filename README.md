@@ -1,125 +1,102 @@
-# ReproGen: A Template Generator for Reproducible Machine Learning Projects on Chameleon Cloud
+# MLflow-replay
 
-## How to use this template generator to create a new template
-
-Use this template generator when you are ready to start a machine learning project on Chameleon Cloud, or if you want to integrate reproducible experiment tracking into your existing project.
-
-To use it:
-
-* Install [cookiecutter](https://github.com/cookiecutter/cookiecutter)
-
-```
-pip install cookiecutter
-```
-
-* Run:
-
-```
-cookiecutter https://github.com/A7med7x7/ReproGen.git --checkout resource-management 
-```
-
-
-* Answer a few questions
-
-Then, you're read to use your new project!
-
-## Provisioning resources on Chameleon Cloud
-
-The `chi` directory in your newly created project automates setting up data buckets, bringing up compute instances, and launching a fully configured Jupyter environment with MLFlow experiment tracking for your machine learning experiments.
-
-In [Chameleon JupyterHub](https://jupyter.chameleoncloud.org/hub/), clone your new project and open the `chi` directory.
-
-### Prerequisites
-
-You must have a [Chameleon Cloud](https://chameleoncloud.org) account, and an allocation as part of a project. You should have already configured SSH keys at the Chameleon site that you plan to use, e.g. following [Hello, Chameleon](https://teaching-on-testbeds.github.io/hello-chameleon/).
-
-### First run only: Create object store buckets
-
-At the beginning of your project, you will create buckets in Chameleon's object store, to hold datasets, metrics, and artifacts from experiment runs. Unlike data saved to the ephemeral local disk of the compute instance, this data will persist beyond the lifetime of the compute instance.
-
-Inside the `chi` directory, run the notebook `0_create_buckets.ipynb` to create these buckets.
-
-### Launching a compute instance
-
-When you need to work on your project, you will launch a compute instance on Chameleon Cloud.
-
-First, you will reserve an instance. Use your project name as a prefix for your lease name.
-
-Then, to provision your server and configure it for your project, you will run:
-
-- For NVIDIA: [`chi/1_create_server_nvidia.ipynb`](chi/1_create_server_nvidia.ipynb)
-- For AMD:  [`chi/1_create_server_amd.ipynb`](chi/1_create_server_amd.ipynb)
+This repository provides an MLflow server setup that allows you to explore experiment artifacts from public object store containers hosted on [Chameleon Cloud](https://chameleoncloud.org). It's for viewing and analyzing previous experiments.
 
 ---
 
-### Configure and start your Jupyter environment
+## About Experiment Reproducibility
 
-On your computer instance (SSH-ing from your local machine via shell), generate the `.env` file required for Docker Compose:
-From your **home directory** (`~`), run:
+When researchers complete their experiments, all the critical information gets automatically collected and stored through our MLflow server. This includes:
 
-```sh
- ./ReproGen/scripts/generate_env.sh
-```
+- Experiment metrics and parameters
+- Artifacts and model files  
+- GPU utilization data
+- Version control status
+- Environment configurations
 
-you will be prompted to enter your HuggingFace Token,after inputting.
-you should see something like:
+Everything needed to understand and reproduce the experiment is safely stored in persistent object storage. this setup lets you browse these experiments that were previously packaged using [ReproGen](https://github.com/A7med7x7/reprogen/tree/dev), so you can analyze results, compare different runs, and build upon existing work.
 
-`✅ The .env file has been generated successfully at : /home/cc/.env`
-
----
-
-From your **home directory** (`~`), run:
-
-```sh
-docker compose --env-file ~/.env -f ReproGen/docker/docker-compose.yml up -d --build
-```
+> [!IMPORTANT]
+> **Sharing Requirements**: to view someone's experiments, the original authors need to:
+> 1. Make their storage bucket publicly accessible 
+> 2. Provide you with the container links or name
 
 ---
 
-### Login to Jupyter Lab and MLFlow UI
+## How It Works
 
-1. Access your jupyter lab at:  `<HOST_IP>:8888` you can grab the token from running image using the command:
+Each previous experiment uses two separate containers for storing information:
 
-```sh
-docker logs jupyter 2>&1 | grep -oE "http://127.0.0.1:8888[^ ]*token=[^ ]*"
-```
+1. **Metrics Container** - Stores run metadata, parameters, and metrics
+2. **Artifacts Container** - Contains model files, plots, and other experiment output
 
-- In the Jupyter terminal, log into GitHub using the CLI
-
-```sh
-gh auth login
-```
-
-Follow the intstructions to authenticate.
-
-2. Access MLFlow UI at `<HOST_IP>:8000`
-
-### Use the environment
-
-
-### 5.5. Stop the Containerized Environment
-
-If you’d like to pause your environment, you can stop the running containers with the command:
-
-```sh
-docker compose --env-file ~/.env -f ReproGen/docker/docker-compose.yml down
-```
-
-This will stop and remove the containers, but all your data in mounted volumes will remain safe.
-When you want to restart later, simply run the docker compose up command again (see Step 4).
+Our setup scripts use `rclone` to mount the public metrics container locally, while MLflow connects directly to the artifacts container via S3 protocol. This gives you full access to browse experiment history and download any artifacts you need.
 
 ---
 
-### 6. Clean Up Resources
+## What You'll Need
 
-When finished, delete your server to free up resources.
+### 1. Container Information
+Get the links to both containers from the experiment authors:
+- Metrics container URL
+- Artifacts container URL
 
-**In Chameleon JupyterHub, open and run:**
+### 2. Access Credentials
+We use EC2 credentials by default. generate yours using the [generate_credentials.ipynb](notebooks/generate_credentials.ipynb) notebook. to access Chameleon Cloud expriement
 
-- [`chi/2_delete_resources.ipynb`](chi/2_delete_resources.ipynb)
+> [!IMPORTANT]
+> **Run the notebook from Chameleon JupyterHub** - it won't work from your local machine or other environment.
 
-#### Acknowledgements
+### 3. Endpoint URL
+Choose the correct endpoint based on where the containers are hosted:
 
-This project was supported by the 2025 [Summer of Reproducibility](https://ucsc-ospo.github.io/sor/).
+- **CHI@TACC**: `https://chi.tacc.chameleoncloud.org:7480`
+- **CHI@UC**: `https://chi.uc.chameleoncloud.org:7480`
 
-Contributors: [Ahmed Alghali](https://ucsc-ospo.github.io/author/ahmed-alghali/), [Mohamed Saeed](https://ucsc-ospo.github.io/author/mohamed-saeed/), [Fraida Fund](https://ucsc-ospo.github.io/author/fraida-fund/).
+---
+
+## Setup Instructions
+
+> [!IMPORTANT]
+> **Run these commands on a Chameleon Cloud node** .
+
+### Step 1: Clone the Repository, from your home directory
+```bash
+cd ~
+git clone https://github.com/A7med7x7/mlflow-s3-public mlflow-read
+```
+
+### Step 2: Generate Configuration Scripts
+```bash
+python3 mlflow-read/main.py
+```
+You'll be prompted to enter the container information and credentials from above. This creates two setup scripts in the `scripts` directory.
+
+### Step 3: Configure Environment
+```bash
+bash mlflow-read/scripts/generate_env.sh
+```
+This script fetches your credentials and container information, storing them in a `.env` file for the next steps.
+
+### Step 4: Mount Storage
+```bash
+bash mlflow-read/scripts/mount_public.sh
+```
+Creates and mounts the directory where metrics data will be accessible.
+
+### Step 5: Start MLflow Server
+```bash
+docker compose --env-file .env2 -f mlflow-read/docker/docker-compose.yml up -d --build
+```
+
+### Step 6: Access the Web Interface
+Get your MLflow URL:
+```bash
+echo "http://$(curl -s ifconfig.me):$(docker port mlflow-replay 8000 | cut -d':' -f2)"
+```
+Copy this URL into your browser to start exploring experiments.
+
+### Step 7: Cleanup (When Finished)
+```bash
+docker compose -f mlflow-read/docker/docker-compose.yml down
+```
