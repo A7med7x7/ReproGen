@@ -97,7 +97,9 @@ Defines the overall setup approach for your environment. tweak the customization
 The rest of the documentation shows what these options are and their implications 
 - **Type**: Single-select
 - **Default**: "Basic"
+
 --- 
+
 ### `project_name`
 
 - We recommend setting `project name` as the prefix for the lease name 
@@ -117,7 +119,7 @@ The rest of the documentation shows what these options are and their implication
 	- most commands and scripts assume a unified `project_name`
 - **Rules**: only letters, numbers, hyphen (-), and underscore (_). no spaces.
 - **Tip**: Choose something short and memorable — remember this will show up in multiple commands and URLs
-- **Type:** str
+- **Type:** `str`
 
 ---
 
@@ -126,7 +128,9 @@ The rest of the documentation shows what these options are and their implication
 - The remote Git repository where the generated project will live, we recommend creating a remote repository (e.g [GitHub](github.com) or [GitLab](gitlab.com)). 
 - Accepts HTTPS or SSH URLs (e.g., `https://github.com/user/repo.git` or `git@gitlab.com:user/repo.git`).
 - After having your project generated, you need to push the code there. (see [Github](https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github) / [Gitlabl](https://forum.gitlab.com/t/how-do-i-push-a-project-to-a-newly-created-git-repo-on-gitlab/68426) Guide on pushing code to remote repo)
-- **Type:** string
+- **Type:** `str`
+- **Note**: can accept blank if you need to set the repository later,
+you will need to manully input the remote repo in create_server notebook. 
 
 ---
 
@@ -138,7 +142,8 @@ The site where your leases at, and compute resources will be provisioned.
 - CHI@TACC → Most GPU bare metal nodes.
 - CHI@UC → University of Chicago resources.
 - KVM@TACC → VM(Virtual Machines )-based compute at TACC.
-- **Type:** select
+- **Type:** `select`
+- **Default**: `CHI@TACC`
 
 --- 
 
@@ -151,16 +156,19 @@ The site where your leases at, and compute resources will be provisioned.
 - CHI@TACC: Texas Advanced Computing Center
 - CHI@UC: University of Chicago
 - **auto** is usually the best choice unless you have a reason to store data in a specific  location. it matches your selected `chameleon_site` if object storage containers are available, if not it defaults to CHI@TACC site. 
-- **Type:** select
+- **Type:** `select`
+- **Default**: `CHI@TACC`
 
 --- 
+
 ### `gpu_type`
 ###### *work only under advanced*
 
 - The type of GPU (or CPU-only) node you want to create and configure. this assumes that you have reserved a node and you know which type it is AMD, NVIDIA or CPU.
 - configuring a server from a lease require the `gpu_type`, as different `gpus` have different setup process. 
 - `nvidia` and `amd` require different container images to. so your decision will result in selecting the appropriate [container images](https://github.com/A7med7x7/ReproGen/tree/dev/template/docker)
-- **Type:** Multi-choice - you can select multiple types. 
+- **Type:** `multi-choice` - you can select multiple types. 
+- **Default**: `NVIDIA`
 - **Note**: when selecting `chemeleon_site` = KVM@TACC the GPU flavors run on NVIDIA hardware as there are no AMD variant. 
 
 ---  
@@ -175,16 +183,18 @@ The site where your leases at, and compute resources will be provisioned.
 - **tensorflow** – Popular deep learning library with a strong ecosystem. 
 - **scikit-learn** –  Machine Learning and data science stack (pandas, scikit-learn, matplotlib, etc.) without deep learning frameworks.
 - **Note**: _PyTorch_ and _PyTorch Lightning_ will prompt for CUDA/ROCm version if you select GPU types.
-- **Type** Multi-choice: you can select multiple frameworks. 
+- **Type** `multi-choice`: you can select multiple frameworks. 
+
 ---
 
 ### `cuda_version` 
-###### *work only under advanced and NVIDIA setup*
+###### *work only under advanced and GPU == NVIDIA*
 
 - Choose the CUDA version that matches your code and driver requirements.
-    - cuda11-latest : highly compatible with most GPUs in Chameleon Cloud 
-    - cuda12-latest : The latest version designed to work with newer GPU architectures
-- **Type** select:
+    - `cuda11-latest` : highly compatible with most GPUs in Chameleon Cloud 
+    - `cuda12-latest` : The latest version designed to work with newer GPU architectures
+- **Type** `select`
+- **Default**: `cuda11-latest`
 ---
 ### `env_setup_mode`
 ###### *work only under advanced* 
@@ -197,16 +207,19 @@ stay inside Chameleon JupyterHub and use a notebook (2_configure_server.ipynb) p
 This approach is more guided and beginner-friendly.
 - both methods generate the same .env file and launch the same docker compose environment.
 The only difference is where you perform the steps: via SSH (manual control) or Notebook (fully browser-based).
-- **Type**: select
+- **Type**: `select`
 - **Default**: `"notebook"` if `setup_mode == 'Basic'`
+
 ---
+
 ### `include_huggingface` 
 ###### *work only under advanced* 
 
 If enabled, it configures the environment to include a HuggingFace token for seamless Hugging Face Hub access and caching of models/datasets . 
 - During server setup you will be prompted to enter a [Hugging Face Token](https://huggingface.co/settings/tokens) 
 - All models/datasets downloaded from Hugging Face will be stored on the mounted point `/mnt/data/`
-- **Type**: bool
+- **Type**: `bool`
+- **Default**: `true`
 
 ---
 
