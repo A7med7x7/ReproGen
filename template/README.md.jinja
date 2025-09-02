@@ -1,23 +1,26 @@
 # {{ project_name }}
 
-Welcome! This project is designed to help you **run ML experiments on Chameleon Cloud** with minimal setup, follow the guide below in order to know how to use the generated project. 
+Welcome! This project is designed to help you **run ML reproducible experiments on Chameleon Cloud** , follow the guide below in order to know how to use the generated project. 
 
 ## Purpose of this README
 
-This README is for **users who have already generated the project**.  
-It explains how to **provision resources, creating confuguring servers using notebooks, and setup your environment** on Chameleon Cloud.  
+It guides you through how to **provision resources, create, and configure servers using notebooks, and setup your environment** on Chameleon Cloud.  
 
-> If you are looking for instructions on **how to generate this project** from the template, see the **[main README](https://github.com/A7med7x7/ReproGen/blob/dev/README.md) at the root of the template repository**.
+>[!TIP]
+> If you are looking for instructions on **how to generate this project** from the template generator, head to the **[main README](https://github.com/A7med7x7/ReproGen/blob/dev/README.md) at the root of the template generator repository**.
 
 ### Prerequisites
 
-- You must have a [Chameleon Cloud](https://chameleoncloud.org) account, and an allocation as part of a project. 
+- You must have a [Chameleon Cloud](https://chameleoncloud.org) account. 
 - You should have already configured SSH keys at the Chameleon site that you plan to use, e.g. following [Hello, Chameleon](https://teaching-on-testbeds.github.io/hello-chameleon/).
 
-
 ## Provisioning resources on Chameleon Cloud
+>[!IMPORTANT]
+> This guide start right after having a [reservation](https://chameleoncloud.readthedocs.io/en/latest/technical/reservations/gui_reservations.html), for a virtual machine or bare metal server, we recommend ideally to name your reservation leases with the 
+> project name {{ project_name }} prefix. if not, it shouldn't be a big issue you will just need to manually enter your lease name later in the create server notebook no 1. 
 
-The `chi` directory in your newly created project automates setting up data buckets, bringing up compute instances, and launching a fully configured Jupyter environment with MLFlow experiment tracking for your machine learning experiments.
+
+The `chi` directory in your newly created project automates setting up data buckets, bringing up compute instances, and if you select notebook in `env_setup_mode`, it can will also help in launching a fully configured Jupyter environment with MLFlow experiment tracking for your machine learning experiments.
 
 In [Chameleon JupyterHub](https://jupyter.chameleoncloud.org/hub/), clone your new project and open the `chi` directory.
 
@@ -27,16 +30,21 @@ git clone {{ repo_url }} {{ project_name }}
 
 ### 1. First run only: Create object store buckets
 
-At the beginning of your project, you will create buckets in Chameleon's object store, to hold datasets, metrics, and artifacts from experiment runs. Unlike data saved to the ephemeral local disk of the compute instance, this data will persist beyond the lifetime of the compute instance.
-
-Inside the `chi` directory, run the notebook [`0_create_buckets.ipynb`](chi/0_create_buckets.ipynb) to create these buckets.
+At the beginning of your project you will 
+1. **Create containers in Chameleon's object store**, 
+to hold datasets, metrics, and artifacts from experiment runs.
+unlike data saved to the ephemeral local disk of the compute instance, this data will persist beyond
+the lifetime of the compute instance.
+2. **Create neccessary crednetials**. if we want some of the tools we are going to use using (e.g rclone and MLflow) to be able to send and 
+retrieve data from our object store we need to create application credentials or EC2 credentials that allows a script or application to authenticate to the object store.  
+Inside the `chi` directory, run the notebook [`0_create_buckets.ipynb`](chi/0_create_buckets.ipynb) to create these buckets.                                                                
 
 ### 2. Launching a compute instance
 
 When you need to work on your project, you will launch a compute instance on Chameleon Cloud.
 
 First, you will [reserve an instance](https://chameleoncloud.readthedocs.io/en/latest/technical/reservations/gui_reservations.html). Use your project name as a prefix for your lease name.
-(e.g {{ project_name }})_gpu_p100
+(e.g {{ project_name }})-gpu-p100-ahmed
 Then, to provision your server and configure it for your project, you will run:
 
 {% if chameleon_site == 'KVM@TACC' and 'cpu' in gpu_type %}
@@ -72,8 +80,8 @@ From your **home directory** (`~`), run:
 bash ./{{ project_name }}/scripts/generate_env.sh
 ```
 
-you will be prompted to enter your HuggingFace Token,after inputting.
-you should see something like:
+you will be prompted to enter your HuggingFace Token,
+after inputting, you should see something like:
 
 `✅ The .env file has been generated successfully at : /home/cc/.env`
 {% else %}
