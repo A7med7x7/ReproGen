@@ -6,11 +6,11 @@ This repository provides an MLflow server setup that allows you to explore exper
 
 ## About Experiment Reproducibility
 
-When researchers complete their experiments, all the critical information gets automatically collected and stored through our MLflow server. This includes:
+When researchers complete their experiments, all the critical information gets automatically collected and stored through an MLflow server. This includes:
 
 - Experiment metrics and parameters
 - Artifacts and model files  
-- GPU utilization data
+- GPU utilization info
 - Version control status
 - Environment configurations
 
