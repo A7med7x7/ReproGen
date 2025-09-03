@@ -1,4 +1,4 @@
-# MLflow-replay
+# mlflow-replay
 
 This repository provides an MLflow server setup that allows you to explore experiment artifacts from public object store containers hosted on [Chameleon Cloud](https://chameleoncloud.org). It's for viewing and analyzing previous experiments.
 
@@ -63,7 +63,7 @@ Choose the correct endpoint based on where the containers are hosted:
 ### Step 1: Clone the Repository, from your home directory
 ```bash
 cd ~
-git clone https://github.com/A7med7x7/mlflow-s3-public mlflow-read
+git clone --branch mlflow-replay https://github.com/A7med7x7/ReproGen.git mlflow-read
 ```
 
 ### Step 2: Generate Configuration Scripts
