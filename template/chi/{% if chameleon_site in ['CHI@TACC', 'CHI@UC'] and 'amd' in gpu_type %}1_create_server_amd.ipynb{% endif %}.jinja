@@ -4,7 +4,7 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "## Launch and set up AMD MI100 server - with python-chi\n",
+    "## Launch and set up AMD bare metal server - with python-chi\n",
     "\n",
     "At the beginning of the lease time, we will bring up our GPU server. We will use the `python-chi` Python API to Chameleon to provision our server.\n",
     "\n",
@@ -23,17 +23,31 @@
    "source": [
     "from chi import server, context, lease\n",
     "import os, time\n",
+    "import getpass\n",
     "\n",
     "context.version = \"1.0\" \n",
     "context.choose_project()\n",
-    "context.choose_site(default=\"CHI@TACC\")"
+    "context.choose_site(default=\"{{ chameleon_site }}\")"
    ]
   },
   {
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "Change the string in the following cell to reflect the name of *your* lease, then run it to get your lease:"
+    "## Select Active Lease\n",
+    "\n",
+    "\n",
+    "In the previous steps (when setting up your project template)\n",
+    "we hightlights that you to name your lease starting with your project name (e.g., {{ project_name }}-gpu-test).\n",
+    "This naming, because the code below searches for your active lease by:\n",
+    "\n",
+    "- listing all leases starting with {{ project_name }} and \"ACTIVE\"\n",
+    "\n",
+    "- if one match -> returns it.\n",
+    "- multiple matches -> lists them so you can pick.\n",
+    "- no matches -> tells you nothing was found.\n",
+    "\n",
+    "after looking into into leases provide the lease name you want to select in the parameter `lease_name`\n"
    ]
   },
   {
@@ -42,7 +56,8 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "lease_name = \"ahmed\""
+    "project_name = \"{{ project_name }}\"\n",
+    "lease_name = None # replace with the lease name you want to select"
    ]
   },
   {
@@ -51,7 +66,42 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "l = lease.get_lease(lease_name) \n",
+    "def get_active_lease(lease_name=None, project_name=None):\n",
+    "\n",
+    "    leases = lease.list_leases()\n",
+    "\n",
+    "    # retrieve exact lease name provided\n",
+    "    if lease_name:\n",
+    "        match = next((l for l in leases if l.name == lease_name), None)\n",
+    "        if not match:\n",
+    "            raise ValueError(f\"no lease found with name '{lease_name}'\")\n",
+    "        return match\n",
+    "\n",
+    "    matching = [\n",
+    "        l for l in leases\n",
+    "        if l.name.startswith(project_name) and l.status.upper() == \"ACTIVE\"\n",
+    "    ]\n",
+    "\n",
+    "    if not matching:\n",
+    "        raise ValueError(f\"no active lease found starting with '{project_name}'\")\n",
+    "\n",
+    "    if len(matching) > 1:\n",
+    "        print(\"you have multiple active leases:\")\n",
+    "        for l in matching:\n",
+    "            print(f\" - {l.name} (status: {l.status})\")\n",
+    "        raise ValueError(\"set 'lease_name' to pick the correct lease.\")\n",
+    "\n",
+    "    return matching[0]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "l = get_active_lease(lease_name, project_name)\n",
+    "print(f\"using lease: {l.name}\")\n",
     "l.show()"
    ]
   },
@@ -83,7 +133,7 @@
    "source": [
     "username = os.getenv('USER') # all exp resources will have this prefix\n",
     "s = server.Server(\n",
-    "    f\"node-mltrain-{username}\", \n",
+    "    f\"{{ project_name }}-node-{username}\", \n",
     "    reservation_id=l.node_reservations[0][\"id\"],\n",
     "    image_name=\"CC-Ubuntu24.04-ROCm\"\n",
     ")\n",
@@ -101,6 +151,7 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
+    "## Associating a floating IP address \n",
     "Then, we’ll associate a floating IP with the instance, so that we can access it over SSH."
    ]
   },
@@ -155,16 +206,8 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "repo = \"https://github.com/A7med7x7/ReproGen.git\" # replace with your desired github repository"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "s.execute(f\"git clone {repo}\") "
+    "repo = \"{{ repo_url }}\" \n",
+    "s.execute(f\"git clone {repo}  {{ project_name }}\") "
    ]
   },
   {
@@ -203,8 +246,8 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "s.execute(\"sudo apt update; wget https://repo.radeon.com/amdgpu-install/6.3.3/ubuntu/noble/amdgpu-install_6.3.60303-1_all.deb\")\n",
-    "s.execute(\"sudo apt -y install ./amdgpu-install_6.3.60303-1_all.deb; sudo apt update\")"
+    "s.execute(\"wget https://repo.radeon.com/amdgpu-install/6.4.3/ubuntu/noble/amdgpu-install_6.4.60403-1_all.deb\")\n",
+    "s.execute(\"sudo DEBIAN_FRONTEND=noninteractive apt install -o Dpkg::Options::='--force-confnew' -y ./amdgpu-install_6.4.60403-1_all.deb\")"
    ]
   },
   {
@@ -253,15 +296,6 @@
    "outputs": [],
    "source": [
     "s.execute(\"sudo usermod -aG video,render $USER\")"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "That’s all we will need on the host - the rest of ROCm will be installed inside the containers.\n",
-    "\n",
-    "To apply the changes to the kernel, we need to reboot, and wait for the server to come back up."
    ]
   },
   {
@@ -329,7 +363,21 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "We also need to modify the configuration file for FUSE (Filesystem in USErspace), which is the Linux interface that allows user‑space applications (instead of the kernel) to mount and manage virtual filesystems. "
+    "We created our buckets earlier in the notebook  [0_create_buckets.ipynb](0_create_buckets.ipynb). To access and manage the data on our GPU compute node, we are going to use rclone, a powerful command-line tool that allows you to interact with our object storage systems like Chameleon object store service. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "now we also need to modify the configuration file for FUSE (Filesystem in USErspace), which is the Linux interface that allows user‑space applications (instead of the kernel) to mount and manage virtual filesystems. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Enabling the `user_allow_other` option ensures that filesystems mounted by our user (such as an object store mounted with rclone) are accessible to other users and processes, including Docker containers running Jupyter notebooks"
    ]
   },
   {
@@ -346,7 +394,14 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "Enabling the `user_allow_other` option ensures that filesystems mounted by our user (such as an object store mounted with rclone) are accessible to other users and processes, including Docker containers running Jupyter notebooks"
+    "Next, we will a create a configuration file for rclone with the ID and secret, you need to generate application credentials: \n",
+    "go over the the chameleon cloud [Horizon GUI](https://chi.{% if chameleon_site == 'CHI@TACC' %}tacc{% elif chameleon_site == 'CHI@UC' %}uc{% elif chameleon_site == 'KVM@TACC' %}tacc{% endif %}.chameleoncloud.org/project/)\n",
+    "- enter to the horizon GUI \n",
+    "- in menu sidebar on the left side of the Horizon GUI, click “Identity”\n",
+    "- select \"Application Credentials\" \n",
+    "- click “Create Application Credential”.\n",
+    "\n",
+    "note: Copy the “ID” and “Secret” displayed in the dialog, and save them in a safe place. You will not be able to view the secret again from the Horizon GUI. Then, click “Download openrc file” to have another copy of the secret.\n"
    ]
   },
   {
@@ -355,9 +410,32 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "# Mounting the buckets using rclone \n",
+    "ACCESS_KEY = getpass.getpass(\"Enter your S3 access key: \")\n",
+    "SECRET_KEY = getpass.getpass(\"Enter your S3 secret key: \")\n",
+    "END_POINT = {% if bucket_site == 'CHI@TACC' %}\"https://chi.tacc.chameleoncloud.org:7480\"{% endif %}{% if bucket_site == 'CHI@UC' %}\"https://chi.uc.chameleoncloud.org:7480\"{% endif %}{% if bucket_site == 'auto' %}\"https://chi.tacc.chameleoncloud.org:7480\"{% endif %}\n",
     "\n",
-    "project_name= 'myproject'\n",
+    "s.execute(f\"\"\"\n",
+    "sudo rm -rf ~/.config\n",
+    "mkdir -p ~/.config/rclone      \n",
+    "cat << EOF | sudo tee ~/.config/rclone/rclone.conf > /dev/null\n",
+    "[rclone_s3]\n",
+    "type = s3\n",
+    "provider = Ceph\n",
+    "access_key_id = {ACCESS_KEY}\n",
+    "secret_access_key = {SECRET_KEY}\n",
+    "endpoint = {END_POINT}\n",
+    "\n",
+    "EOF\n",
+    "\"\"\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# mounting the buckets using rclone (note we are not mounting artifacts bucket)\n",
     "buckets = {\n",
     "    f'{project_name}-data': 'data',\n",
     "    f'{project_name}-mlflow-metrics': 'metrics'\n",
@@ -384,20 +462,13 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "## Access over SSH"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
     "From your local terminal, run\n",
     "\n",
     "    ssh -i ~/.ssh/id_rsa_chameleon cc@A.B.C.D\n",
     "\n",
     "where\n",
     "\n",
-    "-   in place of `~/.ssh/id_rsa_chameleon`, substitute the path to your own key that you had uploaded to CHI@TACC\n",
+    "-   in place of `~/.ssh/id_rsa_chameleon`, substitute the path to your own key that you had uploaded to {{ chameleon_site }}\n",
     "-   in place of `A.B.C.D`, use the floating IP address you just associated to your instance."
    ]
   }
@@ -418,7 +489,7 @@
    "name": "python",
    "nbconvert_exporter": "python",
    "pygments_lexer": "ipython3",
-   "version": "3.10.9"
+   "version": "3.12.10"
   }
  },
  "nbformat": 4,

@@ -3,21 +3,37 @@ services:
   jupyter:
     build:
       context: .
-      dockerfile: Dockerfile.jupyter-cuda
+      dockerfile:
+        {% if "pytorch" in ml_framework and "amd" in gpu_type %}
+        Dockerfile.jupyter-rocm-pt
+        {% elif "tensorflow" in ml_framework and "amd" in gpu_type %}
+        Dockerfile.jupyter-rocm-tf
+        {% elif "sklearn" in ml_framework %}
+        Dockerfile.jupyter-ds
+        {% endif %}
     container_name: jupyter
     ports: 
-    - "8888:8888"
+      - "8888:8888"
     volumes:
-      - ../notebooks:/home/jovyan/work/notebooks     
-      - ../src:/home/jovyan/work/src        
-      - ../utils:/home/jovyan/work/utils
+      - ~/{{ project_name }}:/home/jovyan/work/{{ project_name }}
       - /mnt/data:/home/jovyan/data        
     environment:
       - JUPYTER_ENABLE_LAB=yes
-      - PYTHONPATH=/home/jovyan/work/
+      - PYTHONPATH=/home/jovyan/work/{{ project_name }}
       - MLFLOW_TRACKING_URI=http://mlflow:8000
-    runtime: nvidia
+      - AMD_VISIBLE_DEVICES=all
+      {% if include_huggingface %}
+      - HF_HOME=${HF_HOME}
+      - HF_TOKEN_PATH=${HF_TOKEN_PATH}
+      - HF_TOKEN=${HF_TOKEN}
+      {% endif %}
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri   
+    group_add:
+      - ${GID_RENDER} 
     restart: always 
+    shm_size: 2g
 
   mlflow:
     build:
@@ -33,14 +49,13 @@ services:
       - AWS_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
       - AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED
       - AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED  
-      - HF_TOKEN=${HF_TOKEN}
     volumes:
       - /mnt/metrics:/mlflow/mlruns 
     command:
       - mlflow
       - server
       - --backend-store-uri=/mlflow/mlruns
-      - --artifacts-destination=s3://${PROJECT_NAME}-mlflow-artifacts
+      - --artifacts-destination=s3://{{ project_name }}-mlflow-artifacts
       - --serve-artifacts
       - --host=0.0.0.0
       - --port=8000

@@ -3,7 +3,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "10bfe14d",
+   "id": "c7805de7",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -12,8 +12,16 @@
     "import torch\n",
     "import torch.nn as nn\n",
     "import torch.optim as optim\n",
-    "from utils.mlflow_log import log_git, log_gpu\n",
-    "\n",
+    "from utils.mlflow_log import log_git, log_gpu\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "10bfe14d",
+   "metadata": {},
+   "outputs": [],
+   "source": [
     "# Config\n",
     "config = {\n",
     "    \"lr\": 1e-4,\n",
@@ -24,7 +32,7 @@
     "device = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")\n",
     "\n",
     "# Start MLflow experiment\n",
-    "mlflow.set_experiment(\"your-experiment-name\")\n",
+    "mlflow.set_experiment(\"{{ project_name }}\")\n",
     "\n",
     "# Configure run\n",
     "with mlflow.start_run(log_system_metrics=True) as run:\n",
@@ -50,7 +58,7 @@
     "                            \"val_accuracy\": val_acc,\n",
     "                            \"trainable_params\": trainable_params,}, step=epoch)\n",
     "    # Log model\n",
-    "    mlflow.pytorch.log_model(model, name=\"model\",)\n",
+    "    mlflow.pytorch.log_model(model, name=\"model\")\n",
     "    \n",
     "# Log test metrics\n",
     "mlflow.log_metrics(\n",

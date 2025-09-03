@@ -1,4 +1,4 @@
-FROM quay.io/jupyter/tensorflow-notebook:cuda-latest
+FROM quay.io/jupyter/pytorch-notebook:{{ cuda_version }}
 
 USER root
 
@@ -13,13 +13,18 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 USER ${NB_UID}
-
 # Install psutil for system metrics
 RUN pip install --no-cache-dir psutil    
 
+{% if ml_framework == "pytorch-lightning" %}
+# Install Lightning
+RUN pip install --pre --no-cache-dir lightning && \
+    fix-permissions "${CONDA_DIR}" && \
+    fix-permissions "/home/${NB_USER}"
+{% endif %}
 # Install MLFlow and pynvml 
 RUN pip install --pre --no-cache-dir pynvml && \
-    pip install --pre --no-cache-dir mlflow && \
+    pip install --pre --no-cache-dir mlflow==3.0.0 && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 

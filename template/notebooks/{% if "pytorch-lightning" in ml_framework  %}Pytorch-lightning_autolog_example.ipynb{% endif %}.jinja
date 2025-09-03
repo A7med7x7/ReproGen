@@ -3,7 +3,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "457cf636",
+   "id": "5caf9b83",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -11,10 +11,26 @@
     "import mlflow.pytorch\n",
     "import pytorch_lightning as pl\n",
     "from pytorch_lightning.loggers import MLFlowLogger\n",
-    "from utils.mlflow_log import log_git, log_gpu\n",
-    "\n",
+    "from utils.mlflow_log import log_git, log_gpu\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "457cf636",
+   "metadata": {},
+   "outputs": [],
+   "source": [
     "# Start an experiment and assign it a name\n",
-    "EXPERIMENT_NAME = \"your-experiment-name\"\n",
+    "config = {\n",
+    "    \"lr\": 1e-4,\n",
+    "    \"batch_size\": 32,\n",
+    "    \"epochs\": 10,\n",
+    "}\n",
+    "\n",
+    "device = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")\n",
+    "\n",
+    "EXPERIMENT_NAME = \"{{ project_name }}\"\n",
     "mlflow.set_experiment(EXPERIMENT_NAME)\n",
     "\n",
     "# Start MLflow run\n",
@@ -31,7 +47,7 @@
     "        experiment_name=EXPERIMENT_NAME,\n",
     "        tracking_uri=mlflow.get_tracking_uri(),\n",
     "        run_id=run.info.run_id,\n",
-    "        log_model=False,  # we will log the model manully below\n",
+    "        log_model=False,  # we will log the model manually below\n",
     "    )\n",
     "\n",
     "    # - Instantiate model and datamodule\n",
@@ -49,10 +65,8 @@
     "    # save the final model\n",
     "    mlflow.pytorch.log_model(\n",
     "        model, # replace with your model instance\n",
-    "        artifact_path=\"model\",\n",
-    "        pip_requirements=mlflow.pytorch.get_default_pip_requirements(), # logs environment\n",
-    "        conda_env = mlflow.pytorch.get_default_conda_env()\n",
-    "    )\n"
+    "        name=\"model\"\n",
+    "    )"
    ]
   }
  ],

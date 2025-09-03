@@ -1,0 +1,233 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "1d0077a0",
+   "metadata": {},
+   "source": [
+    "## Create Object store continairs (S3 buckets) \n",
+    "we will use S3-compatible buckets to store our:\n",
+    "\n",
+    "  - `{{ project_name }}-data`: for datasets\n",
+    "  - `{{ project_name }}-mlflow-metrics`: for metrics, logs\n",
+    "  - `{{ project_name }}-mlflow-artifacts`: for model checkpoints, images, etc.\n",
+    "\n",
+    "\n",
+    "The notebook cells uses [openstack](https://docs.openstack.org/mitaka/user-guide/sdk.html) [swiftclient](https://docs.openstack.org/python-swiftclient/latest/), and [python-chi](https://python-chi.readthedocs.io/en/latest/index.html) \n",
+    "to automate object store bucket creation on Chameleon Cloud and create generate credentials for us to be able to mount and write to the object store containers later. \n",
+    "\n",
+    "###  Prerequisites\n",
+    "- This notebook assumes that You must be logged into Chameleon JupyterHub and you run the following cells there."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "b65f8733-0972-4367-b1b4-eef297aa1ff0",
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "#Import required packages\n",
+    "from openstack import connection\n",
+    "from chi import context\n",
+    "import swiftclient\n",
+    "import chi, os"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "ab5c2d91-a18d-4d36-b3cc-1c37bc6ff7d2",
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "project_name = \"{{ project_name }}\" # Define project name (this will prefix the bucket names)\n",
+    "context.choose_project() \n",
+    "context.choose_site(default=\"{% if bucket_site == 'auto' and chameleon_site != 'KVM@TACC' %}{{ chameleon_site }}{% elif bucket_site == 'auto' %}CHI@TACC{% else %}{{ bucket_site }}{% endif %}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "09771a5e",
+   "metadata": {},
+   "source": [
+    "## Authentication for Object Store\n",
+    "\n",
+    "our our JupyterHub session already has the necessary Chameleon credentials, so we don’t type in usernames or passwords.  \n",
+    "\n",
+    "The code below simply asks JupyterHub for a valid **token** and the **object store\n",
+    "endpoint**, and then uses them to connect with our object store services to create the buckets that will store our data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "8d98e4d4-3aad-4eda-bad8-dab18272334c",
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "# Authenticate - getting object store endpoint\n",
+    "os_conn = chi.clients.connection()\n",
+    "token = os_conn.authorize()\n",
+    "storage_url = os_conn.object_store.get_endpoint()\n",
+    "# Connect to Swift (S3-compatible) object store\n",
+    "swift_conn = swiftclient.Connection(preauthurl=storage_url,\n",
+    "                                    preauthtoken=token,\n",
+    "                                    retries=5)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "366351c1",
+   "metadata": {},
+   "source": [
+    "## Creat buckets for our project\n",
+    "\n",
+    "Here we create our **three buckets**:  \n",
+    "\n",
+    "Later , MLflow will be configured to **write metrics to the metrics bucket via a local mount** and **upload artifacts (models, plots, etc.) to the artifacts bucket directly**, while you can upload or download datasets from the data bucket.  "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "ebd9979d-42fa-439d-b458-cc9f9aeb6045",
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "# List of buckets to create\n",
+    "buckets = [\n",
+    "    f\"{project_name}-data\",\n",
+    "    f\"{project_name}-mlflow-metrics\",\n",
+    "    f\"{project_name}-mlflow-artifacts\"\n",
+    "]\n",
+    "# Creating buckets\n",
+    "for bucket in buckets:\n",
+    "    print(f\"Creating bucket: {bucket}\")\n",
+    "    swift_conn.put_container(bucket)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "8b64b31f",
+   "metadata": {},
+   "source": [
+    "### You can check your buckets in Horizon GUI\n",
+    "\n",
+    "Now that buckets are created, you can verify them in the Chameleon Horizon interface.\n",
+    "\n",
+    "1. Log in to [Chameleon Horizon](https://chi.{% if bucket_site == 'CHI@TACC' %}tacc{% elif bucket_site == 'CHI@UC' %}uc{% elif bucket_site == 'auto' and chameleon_site == 'CHI@UC' %}uc{% else %}tacc{% endif %}.chameleoncloud.org)\n",
+    "2. In the left-hand menu, go to **Project → Object Store → Containers**.\n",
+    "3. You should see the buckets you just created here."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "446075e4",
+   "metadata": {},
+   "source": [
+    "### Create application credentials\n",
+    "if we want our compute instance or script (MLflow, rclone, or a data pipeline) to have write access to the Chameleon object store, it needs to authenticate.\n",
+    "instead of using your personal username + password (which is unsafe and interactive), we create an application credential:\n",
+    "\n",
+    "the following script will generate that for us or you can head to create it using the GUI: \n",
+    "\n",
+    "#### USING GUI \n",
+    "go over the the chameleon cloud [Horizon GUI](https://chi.{% if chameleon_site == 'CHI@TACC' %}tacc{% elif chameleon_site == 'CHI@UC' %}uc{% elif chameleon_site == 'KVM@TACC' %}tacc{% endif %}.chameleoncloud.org/project/)\n",
+    "- enter to the horizon GUI \n",
+    "- in the menu sidebar on the left side of the Horizon GUI, click “Identity”\n",
+    "- select \"Application Credentials\" \n",
+    "- click “Create Application Credential”.\n",
+    "\n",
+    "#### if using GUI \n",
+    "You will not be able to view the secret again from the Horizon GUI. Then, click “Download openrc file” to have another copy of the secret.\n",
+    "\n",
+    "#### note \n",
+    "Copy the “ID” and “Secret” displayed in the dialog, and save them in a safe place, in this notebook you want to make sure to clear your cell output before pushing it pubicly "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "12a212e8",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "user = os_conn.current_user_id\n",
+    "\n",
+    "# create application credential\n",
+    "app_cred = os_conn.identity.create_application_credential(\n",
+    "    user=user,\n",
+    "    name=\"rclone_swift_access\",\n",
+    "    description=\"Created via notebook using python-chi\",\n",
+    "    unrestricted=False\n",
+    ")\n",
+    "\n",
+    "print(\"Application Credential ID:\", app_cred.id)\n",
+    "print(\"Application Credential Secret:\", app_cred.secret)\n",
+    "print(\"User ID:\", user)   "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "74ae9d7e",
+   "metadata": {},
+   "source": [
+    "# Generate EC2 credentials\n",
+    "\n",
+    "This cell requests **EC2-style credentials** (Access + Secret) for the **current user/project** in openstack.  by calling Keystone’s `/v3/users/{user_id}/credentials/OS-EC2` API. and then print out an `access` and `secret` key pair."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "34abc1cd",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "conn = connection.from_config()\n",
+    "\n",
+    "project_id = conn.current_project_id \n",
+    "identity_ep = conn.session.get_endpoint(service_type='identity', interface='public')\n",
+    "url = f\"{identity_ep}/v3/users/{conn.current_user_id}/credentials/OS-EC2\"\n",
+    "ID = {\"tenant_id\": project_id}\n",
+    "\n",
+    "response = conn.session.post(url, json=ID)\n",
+    "response.raise_for_status()\n",
+    "ec2 = response.json()[\"credential\"]\n",
+    "\n",
+    "print(\"EC2 Access:\", ec2[\"access\"])\n",
+    "print(\"EC2 Secret:\", ec2[\"secret\"])"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.9"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
