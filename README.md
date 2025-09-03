@@ -27,8 +27,9 @@ Everything needed to understand and reproduce the experiment is safely stored in
 
 Each previous experiment uses two separate containers for storing information:
 
-1. **Metrics Container** - Stores run metadata, parameters, and metrics
-2. **Artifacts Container** - Contains model files, plots, and other experiment output
+1. **Metrics Container**(The Backend store) - which stores run metadata, parameters, and metrics
+2. **Artifacts Container**(The Artifacts store) - Contains model files, plots, and other experiment output
+<img width="1115" height="547" alt="mlflow-server" src="https://github.com/user-attachments/assets/fb67acb6-3755-44d9-91f5-d888e835c67c" />
 
 Our setup scripts use `rclone` to mount the public metrics container locally, while MLflow connects directly to the artifacts container via S3 protocol. This gives you full access to browse experiment history and download any artifacts you need.
 
