@@ -72,7 +72,7 @@ pip install copier
 
 Create a New Project with 
 ```sh
-copier copy --vcs-ref dev https://github.com/A7med7x7/reprogen.git path/to/destination
+copier copy --vcs-ref main https://github.com/A7med7x7/reprogen.git path/to/destination
 ```
 > [!IMPORTANT]
 > Ensure that `path/to/destination` points to an empty directory, and replace `path/to/destination` with the name of the path and directory you want
