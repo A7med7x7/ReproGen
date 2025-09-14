@@ -33,7 +33,7 @@ GID_RENDER=$(getent group render | cut -d: -f3)
 
 {% if include_huggingface %}
 # Hugging Face setup
-HF_HOME="/mnt/data/hf_cache"
+HF_HOME="/home/jovyan/data/hf_cache"
 HF_TOKEN_PATH="/tmp/hf_token"
 
 if [[ -n "$1" ]]; then
