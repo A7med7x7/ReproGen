@@ -1,0 +1,24 @@
+# Importing Libraries
+import mlflow
+import mlflow.sklearn
+from utils.mlflow_log import log_git
+
+# Automatically track sklearn model, environment, params and metrics
+mlflow.sklearn.autolog()
+
+# Start an experiment and assign it a name
+mlflow.set_experiment("{{ project_name }}")
+
+# Start MLflow run
+with mlflow.start_run(log_system_metrics=True) as run:
+    # Log Git and Python info
+    log_git()
+
+    # - You can now...
+    # - Load data
+    # - Define your sklearn model
+    # - Train a model
+    # - Evaluate 
+
+    
+    pass  

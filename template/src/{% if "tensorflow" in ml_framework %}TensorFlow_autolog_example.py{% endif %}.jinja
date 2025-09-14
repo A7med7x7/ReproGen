@@ -1,0 +1,28 @@
+import tensorflow as tf
+import mlflow
+import mlflow.tensorflow
+from utils.mlflow_log import log_git, log_gpu
+
+# - Define model
+# - Criterion and loss
+# Start an experiment and assign it a name
+mlflow.tensorflow.autolog()
+mlflow.set_experiment("{{ project_name }}")
+
+# Start MLflow run
+with mlflow.start_run(log_system_metrics=True)as run:
+    mlflow.log_param("optimizer", "adam")
+    # Log Git and Python info
+    log_git()
+    log_gpu()
+
+    # - data
+    # - define a model 
+    model.fit()
+    # - Log final loss manually
+    # - Log model
+    # - log metrics
+    mlflow.log_metric("loss", final_loss) 
+
+    # - Log model
+    mlflow.log_artifacts("model_tf", name="model")

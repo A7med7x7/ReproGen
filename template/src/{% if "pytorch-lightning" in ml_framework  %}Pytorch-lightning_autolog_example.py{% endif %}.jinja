@@ -1,0 +1,52 @@
+import mlflow
+import mlflow.pytorch
+import pytorch_lightning as pl
+from pytorch_lightning.loggers import MLFlowLogger
+from utils.mlflow_log import log_git, log_gpu
+
+# Start an experiment and assign it a name
+config = {
+    "lr": 1e-4,
+    "batch_size": 32,
+    "epochs": 10,
+}
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+EXPERIMENT_NAME = "{{ project_name }}"
+mlflow.set_experiment(EXPERIMENT_NAME)
+
+# Start MLflow run
+with mlflow.start_run(log_system_metrics=True) as run:
+    # Log Git and Python info
+    log_git()
+    log_gpu()
+
+    # Log your training configuration (dict)
+    mlflow.log_params(config)
+
+    # Setup MLflowLogger for Lightning
+    mlf_logger = MLFlowLogger(
+        experiment_name=EXPERIMENT_NAME,
+        tracking_uri=mlflow.get_tracking_uri(),
+        run_id=run.info.run_id,
+        log_model=False,  # we will log the model manually below
+    )
+
+    # - Instantiate model and datamodule
+    # - model = YourLightningModule(config)
+    # - datamodule = YourDataModule
+
+    trainer = pl.Trainer(
+        max_epochs=10,
+        logger=mlf_logger,
+        enable_model_summary=True,
+    )
+
+    # trainer.fit(model=model, datamodule=datamodule)
+
+    # save the final model
+    mlflow.pytorch.log_model(
+        model, # replace with your model instance
+        name="model"
+    )
