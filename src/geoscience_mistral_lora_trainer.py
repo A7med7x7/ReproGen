@@ -20,13 +20,14 @@ from transformers import (
     AutoModelForCausalLM,
     get_scheduler,
 )
+
 try:
     from transformers import BitsAndBytesConfig
 except Exception:
     BitsAndBytesConfig = None
 
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from utils.mlflow_log import log_git, log_gpu
+from utils.mlflow_log import log_git, log_gpu, log_python
 
 def fatal(msg: str, code: int = 2):
     print("ERROR:", msg, file=sys.stderr)
@@ -36,7 +37,6 @@ def safe_mkdir(p: str):
     Path(p).mkdir(parents=True, exist_ok=True)
 
 def print_env():
-    print("=== ENVIRONMENT ===")
     print("Python:", sys.version.split()[0])
     print("Torch:", torch.__version__)
     print("CUDA available:", torch.cuda.is_available())
@@ -54,12 +54,10 @@ def load_tokenizer_with_fallback(model_name: str, cache_dir: str | None = None):
     cache_dir = cache_dir or os.environ.get("HF_HOME")
     last_exc = None
     try:
-        print("Trying fast tokenizer...")
         return AutoTokenizer.from_pretrained(model_name, use_fast=True)
     except Exception as e:
         print("Fast tokenizer failed:", e); last_exc = e
     try:
-        print("Trying slow tokenizer...")
         return AutoTokenizer.from_pretrained(model_name, use_fast=False)
     except Exception as e:
         print("Slow tokenizer failed:", e); last_exc = e
@@ -84,7 +82,6 @@ def load_tokenizer_with_fallback(model_name: str, cache_dir: str | None = None):
 def prepare_dataset(tokenizer: AutoTokenizer, dataset_name: str, max_length: int, subset_pct: float = 100.0):
     print(f"Loading dataset: {dataset_name}")
     ds = load_dataset(dataset_name, split="train")
-    print("Dataset columns:", ds.column_names)
     preferred = [c for c in ds.column_names if c.lower() in ("text","input","prompt","question","context","instruction")]
     text_col = preferred[0] if preferred else ds.column_names[0]
     print("Using text column:", text_col)
@@ -226,7 +223,7 @@ def train_loop(
     # final save
     adapter_dir = Path(output_dir) / "adapter_final"
     safe_mkdir(adapter_dir)
-    print("Saving final LoRA adapter to", adapter_dir)
+    print("🦎 Saving final LoRA adapter to", adapter_dir)
     model.save_pretrained(adapter_dir)
     mlflow.log_artifacts(str(adapter_dir), artifact_path="adapters")
     return adapter_dir
@@ -264,7 +261,7 @@ def main():
         fatal("BitsAndBytesConfig not available. Install compatible transformers+bitsandbytes.")
 
     # tokenizer + pad handling
-    print("Loading tokenizer:", args.model_name)
+    print("🦎 Loading tokenizer:", args.model_name)
     try:
         tokenizer = load_tokenizer_with_fallback(args.model_name, cache_dir=os.environ.get("HF_HOME"))
     except Exception:
@@ -290,9 +287,9 @@ def main():
     )
 
     max_memory = {0: args.max_memory_gpu0, 1: args.max_memory_gpu1, "cpu": args.max_memory_cpu}
-    print("max_memory mapping:", max_memory)
+    print("🦎 max_memory mapping:", max_memory)
 
-    print("Loading model (QLoRA 4-bit)...")
+    print("🦎 Loading model (QLoRA 4-bit)...")
     try:
         model = AutoModelForCausalLM.from_pretrained(
             args.model_name,
@@ -312,22 +309,21 @@ def main():
         except Exception as e:
             print("Warning: resize_token_embeddings failed:", e)
 
-    print("Model hf_device_map:", getattr(model, "hf_device_map", None))
+    print("🦎 odel hf_device_map:", getattr(model, "hf_device_map", None))
 
     model.config.use_cache = False
-    print("Preparing model for k-bit training...")
+    print("🦎 Preparing model for k-bit training...")
     model = prepare_model_for_kbit_training(model)
 
-    print("Applying LoRA adapters...")
+    print("🦎 Applying LoRA adapters...")
     peft_conf = LoraConfig(r=8, lora_alpha=32, target_modules=["q_proj", "v_proj"], lora_dropout=0.05, bias="none", task_type="CAUSAL_LM")
     model = get_peft_model(model, peft_conf)
 
-    mlflow.set_experiment("UC-NODE-Mistral")
+    mlflow.set_experiment("Mistral-instruct-LoRA")
     with mlflow.start_run(log_system_metrics=True):
-        try: log_git()
-        except Exception as e: print("log_git failed:", e)
-        try: log_gpu()
-        except Exception as e: print("log_gpu failed:", e)
+        log_git()
+        log_gpu()
+        log_python()
 
         mlflow.log_params({
             "model_name": args.model_name,
@@ -340,7 +336,7 @@ def main():
         })
 
         tokenized = prepare_dataset(tokenizer, args.dataset_name, max_length=args.max_seq_length, subset_pct=args.train_subset_pct)
-        print("Dataset examples:", len(tokenized))
+        print("🦎 Dataset examples:", len(tokenized))
 
         adapter_dir = train_loop(
             model=model,
@@ -355,7 +351,7 @@ def main():
             save_every_steps=args.save_every_steps,
         )
 
-        print("Training complete. Adapter saved to:", adapter_dir)
+        print("🦎 Training complete. Adapter saved to:", adapter_dir)
         mlflow.log_artifacts(str(adapter_dir), artifact_path="adapters")
 
 
