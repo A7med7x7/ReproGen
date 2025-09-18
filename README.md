@@ -1,5 +1,5 @@
 
-# experiment
+# geoscience-llm-trainer
 In this tutorial, we will explore how to use the ReproGen tool to generate a reproducible project workflow and inspect the infrastructure and platform design for large-model training. 
 ### Prerequisites
 To run this experiment you need the following:
@@ -88,7 +88,7 @@ When running experiments we generate artifacts that are crucial for reproducing 
 
 The MLflow client in the notebook sends HTTP requests to the server to log metrics and artifacts (examples: model checkpoints, parameters, configuration settings, datasets). 
 
-![[Screenshot 2025-09-18 at 9.02.45 AM.png]]
+![Setup diagram](images/setup.png)
 These data are stored in two object-store containers (S3-compatible). See notebook `0_create_buckets.ipynb`.
 1. **Backend store**: where structured metrics and parameters are stored (mounted at `/mnt/metrics`).
 2. **Artifacts store**: where unstructured artifacts (model checkpoints, pickled models, files) are stored. The MLflow server accesses this bucket directly (not mounted), so inject your Chameleon credentials into the container runtime so MLflow can access the object store.
@@ -191,7 +191,104 @@ When enabling Hugging Face integration, the environment installs HF dependencies
 - `HF_HOME`: cache directory for downloads from HuggingFace Hub, mounted to your data bucket so downloads persist
 
 ## Run and track an experiment
-In this demo we demonstrate how this infrastructure helps train large models. We will fine-tune a large language model, which is computationally expensive.
+In this demo we demonstrate how this infrastructure helps train large models. We will fine-tune a large language model, which is computationally expensive task. 
+
+### finetuning a model 
+
+in the training life cycle of Large Language Models we have the following Phases
+1. **Pre-Training** :the goal of pre-training is the teach the model general language understanding where the model is trained on massive dataset maybe the internet, Wikipedia website or books, this will result in a base model that has a **general understanding** of the language (they know a little bit about everything at this stage but they may not provide us with information with more specific questions/fields)
+2. **Fine-tune/instruct**: the goal here is to make the model useful for specific tasks and improving its ability to follow instructions, we fine tune the model on a dataset that contain the instructions and the desired outputs
+>[!NOTE] We can take this further by adding Safety to our life-cycle of LLM-finetuning where we make the model outputs safe and ethical but for domestication we will stick to the basic life cycle
+
+we will instruct [Mistral-7B-OpenOrca](https://huggingface.co/Open-Orca/Mistral-7B-OpenOrca) an open source LLM with 7 billion parameters that is pre-trained and fine-tuned to outperform the original **Mistral-7B** in reasoning and instruction following tasks. 
+we will use [GeoGPT-QA Dataset](https://huggingface.co/datasets/GeoGPT-Research-Project/GeoGPT-QA) which is a large-scale, synthetically generated collection of 40,000 question-answer pairs. It was created to help fine-tune models on geoscience, we will instruct our Large Language Model with this dataset so it can help us in the future answering questions about geoscience 
+#### Training techniques 
+we will not be retraining a model from scratch, that would cost millions of dollars and unbelievable amount of time, so fine-tuning is about adaptation, it builds on all the knowledge the model already has it just specializes it, the benefits? we will have a complete custom solution that speak our specific language (geoscience in our case), so we achieve way higher accuracy in these tasks
+one of the techniques we will use in our fine-tuning is **LoRA** its a Parameter-Efficient Fine-Tuning (PEFT) methods stand for **Lower Rank Adaptation**  and the difference is Full fine-tuning adjusts/trains all parameters in a large language model (LLM) and of course this requires massive computational resources, data, and storage. while Parameter-Efficient Fine-Tuning (PEFT) methods update a small subset of parameters maybe 1% or add new small layers, drastically reducing costs and memory needs while preserving the base model's knowledge.
 
 
 ![Fine-Tuning vs PEFT (Parameter-Efficient Fine-Tuning): A Practical Guide |  by whyamit404 | Medium](https://miro.medium.com/v2/resize:fit:1400/1*JQvVLGKhcw6jX-Ag0_NS2g.png)
+
+This approach allows tasks that previously took days to be completed in hours, and you can run it on a machine with just 16 GB of RAM, rather than needing a costly one say a 100 GB.
+
+## Run the experiment 
+Inside our Jupyter server we’ll grab the training script for fine-tuning the model and run it.  
+
+```nginx
+cd ~/work/mistral-insrtuct/src 
+wget https://github.com/A7med7x7/ReproGen/blob/3e6290f4904b5ee170afb3c483d2d0c0819d95e2/src/Pytorch_manual_log_example.py 
+```
+open a terminal shell from `file-> new launcher -> terminal` then run the command:
+
+```vb
+python geoscience_mistral_lora_trainer.py 
+```
+
+At this point, you’ll notice the code is broken and some dependencies are missing.  
+This is part of the process we practice adding dependencies to the runtime.
+most of the time you want your software dependencies (any 3rd-party library) inside your `requirements.txt` so they’re installed automatically when running Docker Compose.
+
+SSH into the machine, then stop the containers:
+```vb
+docker compose --env-file .env -f mistral-instruct/docker/docker-compose.yml down
+```
+>[!NOTE] if id didn't work the generated command is provided in your `generated_README.md` at your project repo root
+
+
+and lets add the missing dependencies (sentencepiece) in the `docker/requirements.txt` using 
+```
+nano mistral-instruct/docker/requirements
+```
+paste the library name `sentencepiece` and save the file using `command/ctrl` + `O` and exit with `command/ctrl` + `X`
+run the containers again 
+```vb
+docker compose --env-file .env -f mistral-instruct/docker/docker-compose.yml up -d --build
+```
+Now you can access the web interface for both containers.
+
+---
+
+ before running the script 
+>[!NOTE] the original dataset have around 40,000 samples, in our experiment we will use only 1% (414 samples), so we don't wait for a long amount of time to see complete the process. you can simply used the portion you want from the dataset by manipulating the variable `train_subset_pct` in the training script. 
+
+### Baseline Model (Before Fine-tuning)
+
+before fine-tuning, we’ll run a notebook to check how the **base model** answers geoscience questions
+```nb
+cd work/mistral-instruct/notebooks
+wget 
+```
+Run the cells, and you’ll see the model gives answers that _sound reasonable_ but aren’t very accurate.
+
+For example, a dataset answer might look like:
+
+```txt 
+In the Kuala Terengganu coastal zone, the Delphi and Analytical Hierarchy Process (D-AHP) Hybrid model and Geographic Information System (GIS) technique are used for Coastal Land-Use Assessment (CLUA). These methods help detect the most suitable and unsuitable areas for urban development. The information gathered not only provides insights into the current urban land-use trends and established amenity status in Kuala Terengganu but also supports the potential establishment of urban facilities for improved urban planning and appropriate decision-making. This approach is practical for government, policymakers, and planners to strategize and plan for the future of coastal cities in Malaysia and other similar coastal cities worldwide.
+```
+
+in my case the model answered
+```txt 
+In the Kuala Terengganu coastal zone, land-use suitability assessment is conducted using various methods and tools, such as Geographic Information Systems (GIS), Remote Sensing (RS), and Land-Use/Cover Change (LUCC) modeling. These tools help in analyzing and visualizing the spatial distribution of land uses, identifying potential conflicts, and evaluating the environmental impacts of different land-use options.
+
+1. Geographic Information Systems (GIS): GIS is a powerful tool that integrates, analyzes, and displays geographic data. It allows users to create maps, perform spatial analyses, and generate reports to support decision-making. In the Kuala Terengganu coastal zone, GIS is used to create digital maps of land-use patterns, elevation, soil types, and other relevant data layers. These layers can then be combined and analyzed to determine the most suitable land uses for a specific
+```
+so the models knows something about Geoscience but the information isn't accurate if we were to ask it a question that is new it might hallucinate and provide us with unrelated answers. 
+
+--- 
+### Fine-tuning the Model
+
+now lets fine tune our model, run the command: 
+```vb
+python geoscience_mistral_lora_trainer.py 
+```
+
+you can go and see the MLflow UI and check the following 
+This script applies **LoRA fine-tuning** on the selected subset of the dataset.  
+During training, logs and metrics are automatically tracked in **MLflow**.
+
+You can open the MLflow UI to:
+- Monitor training progress (loss curves, metrics).
+- Track experiments and runs.
+- Compare the fine-tuned model to the base model.
+
+Once fine-tuned, we can reload the adapter and compare how the new model answers the _same question_ more precisely.
