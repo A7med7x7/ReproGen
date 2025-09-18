@@ -31,10 +31,8 @@ and effort.
 
 > [!NOTE]  
 > You can try a **hands-on demo tutorial** with ReproGen 🦎.  
-> Check out our **[LLM Experiment Demo](https://github.com/A7med7x7/chameo/tree/llm-demo)** where we fine-tune and track a language model experiment on Chameleon Cloud using ReproGen's reproducible template.  
-
-> [!TIP]  
-> The tutorial shows how **experiment tracking, MLflow logging, and artifact persistence** work in practice. It’s a great starting point if you want to adapt ReproGen for your own deep learning workflows.  
+> Check out our **[LLM Experiment Demo](https://github.com/A7med7x7/chameo/tree/llm-demo)** where we
+fine-tune and track a language model experiment on Chameleon Cloud using ReproGen's reproducible template. The tutorial shows how **experiment tracking, MLflow logging, and artifact persistence** work in practice. It’s a great starting point if you want to adapt ReproGen for your own deep learning workflows.  
 
 ---
 
