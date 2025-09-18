@@ -1,5 +1,5 @@
 # Geoscience-LLM-trainer
-In this tutorial, we will explore how to use the ReproGen tool to generate a reproducible project workflow and inspect the infrastructure and platform design for large-model training. 
+In this tutorial, we will explore how to use the [ReproGen](https://github.com/A7med7x7/ReproGen) tool to generate a reproducible project workflow and inspect the infrastructure and platform design for large-model training. 
 ### Prerequisites
 To run this experiment you need the following:
 1. An account on Chameleon Cloud (https://chameleoncloud.org).
