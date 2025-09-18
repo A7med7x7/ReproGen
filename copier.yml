@@ -37,10 +37,11 @@ _templates_suffix_to_ignore:
   - ".tar.gz"
 
 __skip_answered: false
+
 # Extensions 
 
 _message_before_copy: |
-  "
+  َ
       ░█████████                                              ░██████                        
     ░██     ░██                                            ░██   ░██                       
     ░██     ░██  ░███████  ░████████  ░██░████  ░███████  ░██         ░███████  ░████████  
@@ -51,7 +52,7 @@ _message_before_copy: |
                           ░██                                                             
                           ░██                                                             
                                                                                           
-  "
+  
 
   🦎 Welcome to ReproGen!
   This generator will help you scaffold a reproducible ML project for Chameleon Cloud.
