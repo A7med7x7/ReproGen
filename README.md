@@ -246,17 +246,17 @@ docker compose --env-file .env -f mistral-instruct/docker/docker-compose.yml up 
 ```
 Now you can access the web interface for both containers.
 
----
-
  before running the script 
->[!NOTE] the original dataset have around 40,000 samples, in our experiment we will use only 1% (414 samples), so we don't wait for a long amount of time to see complete the process. you can simply used the portion you want from the dataset by manipulating the variable `train_subset_pct` in the training script. 
+>[!NOTE] the original dataset have around 40,000 samples, for demonstration our experiment  will use only 1% (414 samples) and 1 epoch, so we don't wait for a long amount of time to see complete the process. you can simply used the portion you want from the dataset by manipulating the variable `train_subset_pct` in the training script. and `epochs` under the parse_args() function. 
+
+---
 
 ### Baseline Model (Before Fine-tuning)
 
 before fine-tuning, we’ll run a notebook to check how the **base model** answers geoscience questions
-```nb
+```vb
 cd work/mistral-instruct/notebooks
-wget 
+wget https://raw.githubusercontent.com/A7med7x7/ReproGen/training-demo/notebooks/1_baseline_model.ipynb 
 ```
 Run the cells, and you’ll see the model gives answers that _sound reasonable_ but aren’t very accurate.
 
@@ -282,13 +282,108 @@ now lets fine tune our model, run the command:
 python geoscience_mistral_lora_trainer.py 
 ```
 
-you can go and see the MLflow UI and check the following 
+>[!TIP] during the experiemnt running you can use a utility we installed earlier when configuring 
+>our server its called `nvtop` it help us monitor the GPU usage via the CLI In a terminal. 
+>on the  host (not inside the container), run 
+>```
+>nvtop
+>```
+![nvtop](images/nvtop.png)
+The display is broken down into three main sections: 
+>1. **GPU Header Information:** The top two blocks provide static and real-time data for each GPU.
+>2. **Real-Time Usage Graphs:** The middle section shows a historical view of GPU and memory utilization.
+>3. **Process List:** The bottom table details which processes are using the GPUs and their resource consumption.
+
 This script applies **LoRA fine-tuning** on the selected subset of the dataset.  
 During training, logs and metrics are automatically tracked in **MLflow**.
+in the our fine-tuning script we set experiment with the name
 
+```python
+mlflow.set_experiment("Mistral-instruct-LoRA")
+```
+and we set `log_system_metrics=True` 
+activate the auto logging for PyTorch using 
+```python
+mlflow.pytorch.autolog(log_models=False)
+```
+>[!NOTE] we set log_models to False because we are not interested in logging the model now and it will take a lot time and disk space to log 7 billion parameter model, or even break the code. 
+
+we use our utility functions 
+```python 
+with mlflow.start_run(log_system_metrics=True):
+
+	log_git()
+	log_gpu()
+	log_python()
+```
+and log parameters we are interested in manually 
+ 
+```python 
+mlflow.log_params({
+	"model_name": args.model_name,
+	"dataset": args.dataset_name,
+	"batch_size": args.per_device_train_batch_size,
+	"grad_accum": args.gradient_accumulation_steps,
+	"seq_len": args.max_seq_length,
+	"epochs": args.epochs,
+	"max_memory": max_memory,
+
+})
+```
+and most importantly we save and log our adapter 
+```python 
+mlflow.log_artifacts(str(adapter_dir), artifact_path="adapters")
+```
+simply think of adapter as small, plug-and-play neural network modules inserted into a pre-trained model's layers during fine-tuning to adapt it to new tasks or domains without retraining the entire model. 
+after the training finish with the logs 
+```nb 
+🦎 Saving final LoRA adapter to /home/jovyan/data/adapters/adapter_final
+🦎 Training complete. Adapter saved to: /home/jovyan/data/adapters/adapter_final
+🏃 View run nosy-rat-137 at: http://mlflow:8000/#/experiments/888977014326260396/runs/40b80e39de694482a66b8765830492d3
+🧪 View experiment at: http://mlflow:8000/#/experiments/888977014326260396
+2025/09/18 17:23:58 INFO mlflow.system_metrics.system_metrics_monitor: Stopping system metrics monitoring...
+2025/09/18 17:23:58 INFO mlflow.system_metrics.system_metrics_monitor: Successfully terminated system metrics monitoring!
+```
 You can open the MLflow UI to:
 - Monitor training progress (loss curves, metrics).
 - Track experiments and runs.
-- Compare the fine-tuned model to the base model.
+You can open the MLflow UI to:
+- Monitor training progress (loss curves, metrics).
+- Track experiments and runs.
+in the MLflow UI look for the experiment name in the left side panel (Mistral-insrtuct-LoRa in our case), when selected you will see runs under that name, the names of the runs are randomly generated
 
-Once fine-tuned, we can reload the adapter and compare how the new model answers the _same question_ more precisely.
+![mlflow ui](images/mlflow-ui-home.png)
+### MLflow UI 
+in the details section you can see the basic information about the run 
+if you move to the artifacts window you will see the following 
+
+![[Screenshot 2025-09-18 at 8.34.49 PM.png]]
+
+1. **Adapter directory** : this is where we saved our model adapter, the checkpoint and training script
+	![mlflow ui experiment](images/mlflow-ui-experiments.png)
+2. **environment.txt** : is where we capture the dependencies in our environment and log it as a txt you can explore it. 
+	![mlflow env](images/mlflow-ui-environment.png)
+3. **git_info.txt**: it includes information about the code tracking like the `remote repository link`, the `branch` in which code was run and the commit hash alongside the `git_diff` command output 
+	![mlflow git](images/mlflow-ui-git.png)
+4. **nvidia_gpu_info.txt**: include the gpu utilization information from the command `nvidia-smi`  in my case: 
+	![mlflow nvidia](images/mlflow-ui-nvidia.png)
+### Test Fine-tuned model
+finally Once fine-tuned, we will test the model by plugging the adapters and and compare how the new model answers the _same question_ more precisely. 
+
+```vb
+cd work/mistral-instruct/notebooks
+wget https://raw.githubusercontent.com/A7med7x7/ReproGen/training-demo/notebooks/2_finetuned_model.ipynb 
+```
+follow the notebook `2_finetuned_model.ipynb` 
+
+###  Wrapping Up
+At this stage, you have:
+- Generated a project using ReproGen
+- Explored the infrastructure needed for large training 
+- Fine-tuned a **Mistral model with LoRA adapters**.
+- Logged metrics, system info, and artifacts in **MLflow**, making your runs reproducible and easy to compare.
+- Tested your **fine-tuned model** against the base model to see the improvements in responses.
+
+you can play with: 
+1. **Compare Results:** Use the MLflow UI to visualize how the fine-tuned model performs cs, artifacts).
+2. **Iterate:** Adjust hyperparameters like `learning_rate`, `epochs`, or `grad_accumulation_steps` and re-run to see if you can improve performance further.
