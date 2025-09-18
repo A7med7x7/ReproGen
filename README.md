@@ -1,229 +1,197 @@
-# ReproGen: A Template Generator for Reproducible Machine Learning Projects on Chameleon Cloud
 
-[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json)](https://github.com/copier-org/copier)
-![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11-blue.svg)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![GitHub release](https://img.shields.io/github/v/release/a7med7x7/chamelab-cli)](https://github.com/a7med7x7/chamelab-cli/releases)
+# experiment
+In this tutorial, we will explore how to use the ReproGen tool to generate a reproducible project workflow and inspect the infrastructure and platform design for large-model training. 
+### Prerequisites
+To run this experiment you need the following:
+1. An account on Chameleon Cloud (https://chameleoncloud.org).
+2. Your SSH key added to the Chameleon Cloud site(s).
+
+### Experiment resources
+
+For this experiment, we will provision one bare-metal node with 2 GPUs.
+We’ll proceed with the `gpu_p100` NVIDIA node at CHI@TACC. 
+
+>[!NOTE] You can create a lease first and then generate a project using ReproGen, or generate the project first and create the lease later — just use the same project name when creating the lease.
+
+### Create a lease
+To use resources on the Chameleon testbed, reserve them by creating a lease. Using the Horizon OpenStack web interface, create a lease for a p100 node.
+
+- from the [Chameleon website](https://chameleoncloud.org/hardware/)
+- click “Experiment” > “CHI@TACC”
+- log in if prompted to do so
+- check the project drop-down menu near the top left (which shows e.g. “CHI-XXXXXX”), and make sure the correct project is selected.
+
+Then,
+
+- On the left side, click on `Reservations` > `Leases`, and then click on `Create Lease`:
+    - set the `Name` of the lease to the project_name you provided when generating the project (we used `mistral-instruct`).
+    - set the start date and length. 3–10 hours is typically sufficient for this experiment.
+    - Click Next.
+- On the “Hosts” tab,
+    - check the `Reserve hosts` box
+    - leave the Minimum number of hosts and Maximum number of hosts at 1
+    - in `Resource properties`, select the node type `gpu_p100`.
+    - add a filter `gpu.gpu_count` and set it to `2`.
+- Click “Next”. Then, click “Create”. (We won’t include any network resources in this lease. We will configure our network programmatically through the generated project notebooks.)
 
 
->[!NOTE]
->
-> Use this template generator when you are ready to start a machine learning project on [Chameleon Cloud](https://www.chameleoncloud.org), or if you want to integrate reproducible experiment tracking into your existing project.
+## Generating a project 
 
+we will use ReproGen to generate a project. ReproGen provides three main benefits:
+1. **Managing resources**: automates cloud setup (object store containers, credentials, servers). The generated notebooks in the `chi` directory handle these steps.
+2. **Reproducible workflows**: provides a dockerized environment tailored to your inputs and an MLflow server to log metrics and artifacts.
+3. **Custom training code**: generates Python scripts and notebooks in `notebooks` and `src` that serve as templates you can adapt.
+![Elements diagram](images/elements.png)
 
-
-**Reproducibility** in Machine Learning means being able to reproduce the results of an experiment using the same code, with the same data and environment, and obtain the same results.  
-in research, this remains a **significant problem** — many papers lack proper experiment tracking, dependency capturing, versioning, and artifact sharing. As a result, even the original authors often struggle to reproduce their own results several months later.
-this weakens trust and slows scientific progress, since others cannot easily validate or build upon previous work.  
-in production, however, **MLOps practices** (automation, versioning, monitoring) have proven to be key enablers of reproducible and trustworthy ML systems. 
-but for researchers, **adapting these tools and practices is full of friction** — stitching everything together takes considerable time
-and effort.  
-
-**ReproGen removes this barrier** by providing ready-to-use templates with reproducibility baked in, so you can focus on spinning up your VMs instead of infrastructure.
-
-**Supporting Reproducibility with ReproGen**:  
-- It makes it easier for researchers and scientists to adopt MLOps practices in their projects.  
-- It provides ready-to-launch templates with reproducibility baked in (experiment tracking, consistent environments, artifact persistence).  
-- It lowers the barrier to reproducible research on platforms like **Chameleon Cloud**.  
- > [!TIP]    
-> You can use our **[mlfow-replay](https://github.com/A7med7x7/ReproGen/tree/mlflow-replay)** setup to **revisit an experiment previously run on Chameleon Cloud**.  
-> This branch includes an MLflow setup that **reads and load artifacts of a previous experiment generated by our ReproGen template generator** from a public Chameleon Cloud object store containers.  
-> This allows you to **reproduce, inspect, and extend** experiments easily.
-
----
-
-
-## How to use this template generator to create a new project
-
-This repository is not intended to be cloned or forked directly. Instead use Copier to generate a project from the template, which will prompt you for configuration.
-
-you will learn more about this in **[Getting Started](#getting-started)** 
-
----
-## Requirements
-
-- [Chameleon Cloud account](https://www.chameleoncloud.org)
-- [Python](https://www.python.org/downloads/)
-- [Copier](https://copier.readthedocs.io/en/stable/)
-
-> [!Caution]
-> If you have python pre-installed on your machine, make sure its version ≥ 3.9 and Copier ≥ 9.0
-
----
-
-##  Installation
-
-Install Copier
+To generate a project, run the following command on Chameleon JupyterHub: 
 
 ```sh
-pipx install copier
+pip install copier
 ```
 
-or 
+### Getting Started
+Create a new project with
+
 ```sh
-pip install copier 
+copier copy --vcs-ref main https://github.com/A7med7x7/reprogen.git llm-finetune 
 ```
-> [!NOTE]
-> You can also install Copier using regular [pip](https://pip.pypa.io/en/stable/getting-started/). however, this will place it in your main Python environment, which may lead to dependency conflicts (that you don't want). using [pipx](https://pipx.pypa.io/stable/installation/) is recommended instead, since it installs Copier in its own isolated environment.
+  
+Below are example answers to the copier prompts:
+
+➜ copier copy --vcs-ref main https://github.com/A7med7x7/reprogen.git home
+
+Choose configuration mode: `Advanced`
+Project name: `mistral-instruct`
+Git repository URL: (optional) create a public GitHub repository to host the generated project if you want it cloned on the node.
+Select site for compute resources: **CHI@TACC** (we use bare metal here)
+Location for S3 data buckets: **CHI@UC** (you can choose another)
+GPU type for the lease: `nvidia`
+Primary ML framework: `pytorch`
+CUDA version for Jupyter image: `cuda11-latest` (or choose newer like `cuda-12`)
+Server configuration mode: `notebook` (options include `.env` generation, docker-compose, etc.)
+Enable Hugging Face integration? `Yes` (we pre-install HF packages and manage HF configuration)
 
 ---
+## set up the environment 
+Now in the generated project, follow its README to create buckets, configure the server, and set up the environment in the `chi` directory.
+When running `2_configure_server.ipynb`, grab an access token from Hugging Face with read access (see https://huggingface.co/docs/hub/security-tokens) and paste it when prompted.
 
-## Getting Started
+### Accessing the Jupyter container
+After you start the dockerized `jupyter` and `mlflow` containers, open them in the browser (one tab for Jupyter Lab and one for the MLflow server) to inspect the setup.
 
-Create a New Project with 
-```sh
-copier copy --vcs-ref main https://github.com/A7med7x7/reprogen.git path/to/destination
+### Understanding our setup and tools
+We have:
+- **MLflow server**
+- **Object store containers**
+
+When running experiments we generate artifacts that are crucial for reproducing results. The MLflow tracking server is set up (port 8000) and bound to the host so you can view metrics and artifacts via its web UI.
+
+The MLflow client in the notebook sends HTTP requests to the server to log metrics and artifacts (examples: model checkpoints, parameters, configuration settings, datasets). 
+
+![[Screenshot 2025-09-18 at 9.02.45 AM.png]]
+These data are stored in two object-store containers (S3-compatible). See notebook `0_create_buckets.ipynb`.
+1. **Backend store**: where structured metrics and parameters are stored (mounted at `/mnt/metrics`).
+2. **Artifacts store**: where unstructured artifacts (model checkpoints, pickled models, files) are stored. The MLflow server accesses this bucket directly (not mounted), so inject your Chameleon credentials into the container runtime so MLflow can access the object store.
+These elements are what makes our MLflow tracking server setup; it is suitable for team use as well as personal use.
+You can view the Docker Compose configuration at `docker/docker-compose.yml`.
+
+We track experiments by name; each MLflow run is recorded under the experiment so you can compare runs and extract insights. In the generated code snippets under `notebooks` and `src` you will find examples like: 
+```python
+mlflow.set_experiment("project_name")  # replaced with your project name
 ```
-> [!IMPORTANT]
-> Ensure that `path/to/destination` points to an empty directory, and replace `path/to/destination` with the name of the path and directory you want
+This defines an experiment. Then you can start runs with:
+```python
+with mlflow.start_run(log_system_metrics=True) as run:
+```
+Passing `log_system_metrics=True` enables collection of system metrics (disk, memory, and power usage).
+You will also find helper functions like:
+```python
+log_git()
+log_gpu()
+```
+They are imported from:
+```python
+from utils.mlflow_log import log_git, log_gpu
+```
 
-Answer a few questions, and Copier will generate the project in that directory. See **[Setup Parameters and Their Roles](#setup-parameters-and-their-roles)** below if you want to know the role of the questions and what they will generate. 
+We wrote utility scripts to capture additional details beyond MLflow's native features. Here is what each function does:
 
-> [!TIP]
-> If you're new to Chameleon Cloud, we recommend using `Basic` in [setup mode](#setup_mode). It's beginner-friendly!
----
-### Follow your README.md 
-When the project is generated, a README.md file will be created at the root.it contains all the instructions to guide you through setting your environment.
+##### `log_git()` — Captures Code Versioning  
+Uses Git commands (via subprocess) to log:  
+- Current branch name  
+- Commit hash  
+- Repository status (clean or dirty)  
 
----
-## Setup Parameters and Their Roles
-Your answers will generate a project based on your input values, below you can find the variables with their description and implications  
+**Example Output:**  
+```nginx
+commit: a7c3e9d
+branch: main
+status: dirty (1 file modified)
+# and git diff output 
+```
 
-### `setup_mode`
-Defines the overall setup approach for your environment. tweak the customization you want during server and Docker environment creation.
-- **Basic**: minmal prompts. you will be asked to input your project name ([`project_name`](#project_name)), remote repository link ([`repo_url`](#repo_url)) and framework of your choice ([`ml_framework`](#ml_framework)) it recommend defaults for most options.
-- **Advanced**: Lets you control Compute site ([chameleon_site](#chameleon_site)), GPU type ([`gpu_type`](#gpu_type)), CUDA version ([`cuda_version`](#cuda_version)), storage site ([`bucket_site`](#bucket_site))
-The rest of the documentation shows what these options are and their implications 
-- **Type**: Single-select
-- **Default**: "Basic"
+##### `log_python()` — Tracks the Python environment
 
---- 
+- Platform and Python version information
+- Exports a full `pip freeze` list to a .txt file
+- Saves that file as an MLflow artifact to guarantee exact package-version reproducibility
+Example output (pip freeze):
+```text
+numpy==1.26.4
+pandas==2.2.1
+scikit-learn==1.4.2
+torch==2.2.0
+```
+[!NOTE] In most cases you won't need this function because many frameworks provide autolog features. Use it when your framework does not support autologging — see supported libraries: https://mlflow.org/docs/latest/ml/tracking/autolog/#supported-libraries
+##### `log_gpu()` — Records GPU information
 
-### `project_name`
+- Detects available GPU devices
+- Collects details using NVIDIA’s pynvml or AMD’s ROCm tools
+- Logs:
+ 
+  - GPU name
+  - Driver version
+  - CUDA/ROCm version
+  - gpu-type-smi output for deeper inspection
 
-- We recommend setting `project name` as the prefix for the lease name 
-- It is used everywhere your project is referenced:   
-    - object store names (e.g., `project-name-data`, `project-name-mlflow-artifacts`)
-    - Compute instances /servers are going to include the `project_name` as their prefix 
-    
-        ```python
-            # when creating a server
-			s = server.Server(
-			f"{{ project_name }}-node-{username}"
-        ```
-			
-     
-	- Your material on the compute instance will be under a directory named after your `project_name`
-    - The containerized environment will look for a directory with the `project_name` directory 
-	- most commands and scripts assume a unified `project_name`
-- **Rules**: only letters, numbers, hyphen (-), and underscore (_). no spaces.
-- **Tip**: Choose something short and memorable — remember this will show up in multiple commands and URLs
-- **Type:** `str`
+These utilities ensure that each run can be traced back with:
 
----
-
-### `repo_url`
-
-- The remote Git repository where the generated project will live, we recommend creating a remote repository (e.g [GitHub](github.com) or [GitLab](gitlab.com)). 
-- Accepts HTTPS or SSH URLs (e.g., `https://github.com/user/repo.git` or `git@gitlab.com:user/repo.git`).
-- After having your project generated, you need to push the code there. (see [Github](https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github) / [Gitlabl](https://forum.gitlab.com/t/how-do-i-push-a-project-to-a-newly-created-git-repo-on-gitlab/68426) Guide on pushing code to remote repo)
-- **Type:** `str`
-- **Note**: can accept blank if you need to set the repository later,
-you will need to manully input the remote repo in create_server notebook. 
-
----
-
-### `chameleon_site`
-
-The site where your leases at, and compute resources will be provisioned. 
-- This doesn’t control persistent storage storage location (that’s [`bucket_site`](#bucket_site)).
-#### **options**
-- CHI@TACC → Most GPU bare metal nodes.
-- CHI@UC → University of Chicago resources.
-- KVM@TACC → VM(Virtual Machines )-based compute at TACC.
-- **Type:** `select`
-- **Default**: `CHI@TACC`
-
---- 
-
-### `bucket_site`
-###### *work only under advanced*
-
-- This is where your [object storage contrainers](https://chameleoncloud.readthedocs.io/en/latest/technical/swift/index.html#object-store) for you project will live.
-#### **options**
-
-- CHI@TACC: Texas Advanced Computing Center
-- CHI@UC: University of Chicago
-- **auto** is usually the best choice unless you have a reason to store data in a specific  location. it matches your selected `chameleon_site` if object storage containers are available, if not it defaults to CHI@TACC site. 
-- **Type:** `select`
-- **Default**: `CHI@TACC`
-
---- 
-
-### `gpu_type`
-###### *work only under advanced*
-
-- The type of GPU (or CPU-only) node you want to create and configure. this assumes that you have reserved a node and you know which type it is AMD, NVIDIA or CPU.
-- configuring a server from a lease require the `gpu_type`, as different `gpus` have different setup process. 
-- `nvidia` and `amd` require different container images to. so your decision will result in selecting the appropriate [container images](https://github.com/A7med7x7/ReproGen/tree/dev/template/docker)
-- **Type:** `multi-choice` - you can select multiple types. 
-- **Default**: `NVIDIA`
-- **Note**: when selecting `chemeleon_site` = KVM@TACC the GPU flavors run on NVIDIA hardware as there are no AMD variant. 
-
----  
-
-### `ml_framework`
-
-- Selects the primary ML/deep learning framework for your environment.
-- It will decide which container image to include and use for your Jupyter Lab. 
-- Custom training code for the selected `ml_framework` will be generated
-- **pytorch** – Flexible, widely used deep learning library. Supports CUDA (NVIDIA) and ROCm (AMD).
-- **pytorch-lightning** – High-level wrapper for PyTorch that simplifies training loops. Supports CUDA (NVIDIA) and ROCm (AMD).
-- **tensorflow** – Popular deep learning library with a strong ecosystem. 
-- **scikit-learn** –  Machine Learning and data science stack (pandas, scikit-learn, matplotlib, etc.) without deep learning frameworks.
-- **Note**: _PyTorch_ and _PyTorch Lightning_ will prompt for CUDA/ROCm version if you select GPU types.
-- **Type** `multi-choice`: you can select multiple frameworks. 
+- The exact code version
+- The full Python environment
+- The hardware details used
 
 ---
+#### Using MLflow functions
+If you have a configuration dictionary you can use:
+```python
+mlflow.log_params(config)
+```
+To log multiple metrics:
+```python
+mlflow.log_metrics({
+    "epoch_time": epoch_time,
+    "train_loss": train_loss,
+    "train_accuracy": train_acc,
+    "val_loss": val_loss,
+    "val_accuracy": val_acc,
+    "trainable_params": trainable_params,
+}, step=epoch)
+```
+To log a model with MLflow (for PyTorch):
+```python
+mlflow.pytorch.log_model(model, name="model")
+```
 
-### `cuda_version` 
-###### *work only under advanced and GPU == NVIDIA*
+#### Hugging Face integration 🤗
 
-- Choose the CUDA version that matches your code and driver requirements.
-    - `cuda11-latest` : highly compatible with most GPUs in Chameleon Cloud 
-    - `cuda12-latest` : The latest version designed to work with newer GPU architectures
-- **Type** `select`
-- **Default**: `cuda11-latest`
----
-### `env_setup_mode`
-###### *work only under advanced* 
-How would you like to configure your server (.env file generation & docker compose setup)?
-You have two options:
-- **SSH** : 
-SSH into your reserved compute instance and follow the README instructions to generate the .env file and launch your docker compose environment.
-- **Notebook**: 
-stay inside Chameleon JupyterHub and use a notebook (2_configure_server.ipynb) provided in the chi directory to configure your server.
-This approach is more guided and beginner-friendly.
-- both methods generate the same .env file and launch the same docker compose environment.
-The only difference is where you perform the steps: via SSH (manual control) or Notebook (fully browser-based).
-- **Type**: `select`
-- **Default**: `"notebook"` if `setup_mode == 'Basic'`
+When enabling Hugging Face integration, the environment installs HF dependencies (see `docker/requirements`) and generates these environment variables:
 
----
+- `HF_TOKEN`: your access token (provided by you)
+- `HF_TOKEN_PATH`: ephemeral path where the token is stored (to avoid leakage)
+- `HF_HOME`: cache directory for downloads from HuggingFace Hub, mounted to your data bucket so downloads persist
 
-### `include_huggingface` 
-###### *work only under advanced* 
+## Run and track an experiment
+In this demo we demonstrate how this infrastructure helps train large models. We will fine-tune a large language model, which is computationally expensive.
 
-If enabled, it configures the environment to include a HuggingFace token for seamless Hugging Face Hub access and caching of models/datasets . 
-- During server setup you will be prompted to enter a [Hugging Face Token](https://huggingface.co/settings/tokens) 
-- All models/datasets downloaded from Hugging Face will be stored on the mounted point `/mnt/data/`
-- **Type**: `bool`
-- **Default**: `true`
 
----
-
-#### Acknowledgements
-
-This project was supported by the 2025 [Summer of Reproducibility](https://ucsc-ospo.github.io/sor/).
-
-Contributors: [Ahmed Alghali](https://ucsc-ospo.github.io/author/ahmed-alghali/), [Mohamed Saeed](https://ucsc-ospo.github.io/author/mohamed-saeed/), [Fraida Fund](https://ucsc-ospo.github.io/author/fraida-fund/).
+![Fine-Tuning vs PEFT (Parameter-Efficient Fine-Tuning): A Practical Guide |  by whyamit404 | Medium](https://miro.medium.com/v2/resize:fit:1400/1*JQvVLGKhcw6jX-Ag0_NS2g.png)
