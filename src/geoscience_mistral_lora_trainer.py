@@ -319,6 +319,7 @@ def main():
     peft_conf = LoraConfig(r=8, lora_alpha=32, target_modules=["q_proj", "v_proj"], lora_dropout=0.05, bias="none", task_type="CAUSAL_LM")
     model = get_peft_model(model, peft_conf)
 
+    mlflow.pytorch.autolog(log_models=False)
     mlflow.set_experiment("Mistral-instruct-LoRA")
     with mlflow.start_run(log_system_metrics=True):
         log_git()
