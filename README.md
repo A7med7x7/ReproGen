@@ -1,5 +1,4 @@
-
-# geoscience-llm-trainer
+# Geoscience-LLM-trainer
 In this tutorial, we will explore how to use the ReproGen tool to generate a reproducible project workflow and inspect the infrastructure and platform design for large-model training. 
 ### Prerequisites
 To run this experiment you need the following:
@@ -11,7 +10,9 @@ To run this experiment you need the following:
 For this experiment, we will provision one bare-metal node with 2 GPUs.
 We’ll proceed with the `gpu_p100` NVIDIA node at CHI@TACC. 
 
->[!NOTE] You can create a lease first and then generate a project using ReproGen, or generate the project first and create the lease later — just use the same project name when creating the lease.
+>[!NOTE]
+>
+>You can create a lease first and then generate a project using ReproGen, or generate the project first and create the lease later, just use the same project name when creating the lease.
 
 ### Create a lease
 To use resources on the Chameleon testbed, reserve them by creating a lease. Using the Horizon OpenStack web interface, create a lease for a p100 node.
@@ -142,7 +143,9 @@ pandas==2.2.1
 scikit-learn==1.4.2
 torch==2.2.0
 ```
-[!NOTE] In most cases you won't need this function because many frameworks provide autolog features. Use it when your framework does not support autologging — see supported libraries: https://mlflow.org/docs/latest/ml/tracking/autolog/#supported-libraries
+>[!NOTE]
+>
+>In most cases you won't need this function because many frameworks provide autolog features. Use it when your framework does not support autologging — see supported libraries: https://mlflow.org/docs/latest/ml/tracking/autolog/#supported-libraries
 ##### `log_gpu()` — Records GPU information
 
 - Detects available GPU devices
@@ -198,7 +201,9 @@ In this demo we demonstrate how this infrastructure helps train large models. We
 in the training life cycle of Large Language Models we have the following Phases
 1. **Pre-Training** :the goal of pre-training is the teach the model general language understanding where the model is trained on massive dataset maybe the internet, Wikipedia website or books, this will result in a base model that has a **general understanding** of the language (they know a little bit about everything at this stage but they may not provide us with information with more specific questions/fields)
 2. **Fine-tune/instruct**: the goal here is to make the model useful for specific tasks and improving its ability to follow instructions, we fine tune the model on a dataset that contain the instructions and the desired outputs
->[!NOTE] We can take this further by adding Safety to our life-cycle of LLM-finetuning where we make the model outputs safe and ethical but for domestication we will stick to the basic life cycle
+>[!NOTE]
+>
+>We can take this further by adding Safety to our life-cycle of LLM-finetuning where we make the model outputs safe and ethical but for domestication we will stick to the basic life cycle
 
 we will instruct [Mistral-7B-OpenOrca](https://huggingface.co/Open-Orca/Mistral-7B-OpenOrca) an open source LLM with 7 billion parameters that is pre-trained and fine-tuned to outperform the original **Mistral-7B** in reasoning and instruction following tasks. 
 we will use [GeoGPT-QA Dataset](https://huggingface.co/datasets/GeoGPT-Research-Project/GeoGPT-QA) which is a large-scale, synthetically generated collection of 40,000 question-answer pairs. It was created to help fine-tune models on geoscience, we will instruct our Large Language Model with this dataset so it can help us in the future answering questions about geoscience 
@@ -232,7 +237,9 @@ SSH into the machine, then stop the containers:
 ```vb
 docker compose --env-file .env -f mistral-instruct/docker/docker-compose.yml down
 ```
->[!NOTE] if id didn't work the generated command is provided in your `generated_README.md` at your project repo root
+>[!NOTE]
+>
+>if it didn't work the generated command is provided in your generated `README.md` at your project repo root.
 
 
 and lets add the missing dependencies (sentencepiece) in the `docker/requirements.txt` using 
@@ -247,7 +254,9 @@ docker compose --env-file .env -f mistral-instruct/docker/docker-compose.yml up 
 Now you can access the web interface for both containers.
 
  before running the script 
->[!NOTE] the original dataset have around 40,000 samples, for demonstration our experiment  will use only 1% (414 samples) and 1 epoch, so we don't wait for a long amount of time to see complete the process. you can simply used the portion you want from the dataset by manipulating the variable `train_subset_pct` in the training script. and `epochs` under the parse_args() function. 
+>[!NOTE]
+>
+>the original dataset have around 40,000 samples, for demonstration our experiment  will use only 1% (414 samples) and 1 epoch, so we don't wait for a long amount of time to see complete the process. you can simply used the portion you want from the dataset by manipulating the variable `train_subset_pct` in the training script. and `epochs` under the parse_args() function. 
 
 ---
 
@@ -282,14 +291,16 @@ now lets fine tune our model, run the command:
 python geoscience_mistral_lora_trainer.py 
 ```
 
->[!TIP] during the experiemnt running you can use a utility we installed earlier when configuring 
+>[!TIP]
+>
+>during the experiemnt running you can use a utility we installed earlier when configuring 
 >our server its called `nvtop` it help us monitor the GPU usage via the CLI In a terminal. 
 >on the  host (not inside the container), run 
 >```
 >nvtop
 >```
-![nvtop](images/nvtop.png)
-The display is broken down into three main sections: 
+> ![nvtop](images/nvtop.png)
+> The display is broken down into three main sections: 
 >1. **GPU Header Information:** The top two blocks provide static and real-time data for each GPU.
 >2. **Real-Time Usage Graphs:** The middle section shows a historical view of GPU and memory utilization.
 >3. **Process List:** The bottom table details which processes are using the GPUs and their resource consumption.
@@ -306,7 +317,9 @@ activate the auto logging for PyTorch using
 ```python
 mlflow.pytorch.autolog(log_models=False)
 ```
->[!NOTE] we set log_models to False because we are not interested in logging the model now and it will take a lot time and disk space to log 7 billion parameter model, or even break the code. 
+>[!NOTE]
+>
+>we set log_models to False because we are not interested in logging the model now and it will take a lot time and disk space to log 7 billion parameter model, or even break the code. 
 
 we use our utility functions 
 ```python 
