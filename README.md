@@ -1,7 +1,7 @@
 # Geoscience-LLM-trainer
 In this tutorial, we will explore how to use the [ReproGen](https://github.com/A7med7x7/ReproGen) tool to generate a reproducible project workflow and inspect the infrastructure and platform design for large-model training. 
 ### Prerequisites
-To run this experiment you need the following:
+To run this experiment, you need the following:
 1. An account on [Chameleon Cloud](https://chameleoncloud.org).
 2. Configured SSH key added to the Chameleon Cloud sites.(see [create keys](https://teaching-on-testbeds.github.io/hello-chameleon/#:~:text=Exercise%3A%20Create%20SSH%20keys) exercise on Hello Chameleon)
 
@@ -37,7 +37,8 @@ Then,
 
 >[!IMPORTANT]
 >
-The project name we select will be used as a prefix for naming the server and our Object Store Container, and it will shape the commands we use throughout the experiment. Therefore, if you pick a different name, you may need to select the commands carefully here. 
+>The project name we select will be used as a prefix for naming the server and our Object Store Container, and it will shape the commands we use throughout the experiment. Therefore, if you pick a different
+>name, you may need to select the commands carefully here. 
 
 ## Generating a project 
 
