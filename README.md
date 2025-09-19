@@ -98,19 +98,19 @@ The MLflow client in the notebook sends HTTP requests to the server to log metri
 ![Setup diagram](images/setup.png)
 These data are stored in two object-store containers (S3-compatible). See notebook `0_create_buckets.ipynb`.
 1. **Backend store**: where structured metrics and parameters are stored (mounted at `/mnt/metrics`).
-2. **Artifacts store**: where unstructured artifacts (model checkpoints, pickled models, files) are stored. The MLflow server accesses this bucket directly (not mounted), so inject your Chameleon credentials into the container runtime so MLflow can access the object store.
+2. **Artifacts store**: where unstructured artifacts (model checkpoints, pickled models, files) are stored. The MLflow server accesses this bucket directly (not mounted), it inject your Chameleon credentials into the container runtime so MLflow can access the object store.
 These elements are what makes our MLflow tracking server setup; it is suitable for team use as well as personal use.
 You can view the Docker Compose configuration at `docker/docker-compose.yml`.
 
-We track experiments by name; each MLflow run is recorded under the experiment so you can compare runs and extract insights. In the generated code snippets under `notebooks` and `src` you will find examples like: 
+We track experiments by name; each MLflow run is recorded under the an experiment so you can compare runs and extract insights. in the generated code snippets under `notebooks` and `src` directories you will find examples like: 
 ```python
 mlflow.set_experiment("project_name")  # replaced with your project name
 ```
-This defines an experiment. Then you can start runs with:
+This defines an experiment. Then you can start runs under:
 ```python
 with mlflow.start_run(log_system_metrics=True) as run:
 ```
-Passing `log_system_metrics=True` enables collection of system metrics (disk, memory, and power usage).
+Passing `log_system_metrics=True` enables logging a collection of system metrics (disk, memory, and power usage).
 You will also find helper functions like:
 ```python
 log_git()
@@ -121,7 +121,7 @@ They are imported from:
 from utils.mlflow_log import log_git, log_gpu
 ```
 
-We wrote utility scripts to capture additional details beyond MLflow's native features. Here is what each function does:
+We wrote these utility scripts to capture additional details beyond MLflow's native features. Here is what each function does:
 
 ##### `log_git()` — Captures Code Versioning  
 Uses Git commands (via subprocess) to log:  
@@ -151,7 +151,7 @@ torch==2.2.0
 ```
 >[!NOTE]
 >
->In most cases you won't need this function because many frameworks provide autolog features. Use it when your framework does not support autologging — see supported libraries: https://mlflow.org/docs/latest/ml/tracking/autolog/#supported-libraries
+>In most cases you won't need this function because the auto-log feature supporter in multiple frameworks provide similar funtionality. use it when your framework does not support autologging — see [supported libraries](https://mlflow.org/docs/latest/ml/tracking/autolog/#supported-libraries)
 ##### `log_gpu()` — Records GPU information
 
 - Detects available GPU devices
@@ -161,13 +161,13 @@ torch==2.2.0
   - GPU name
   - Driver version
   - CUDA/ROCm version
-  - gpu-type-smi output for deeper inspection
+  - gpu-type-smi output for inspection
 
 These utilities ensure that each run can be traced back with:
 
 - The exact code version
 - The full Python environment
-- The hardware details used
+- The hardware details used/GPU utilization
 
 ---
 #### Using MLflow functions
@@ -197,15 +197,15 @@ When enabling Hugging Face integration, the environment installs HF dependencies
 
 - `HF_TOKEN`: your access token (provided by you)
 - `HF_TOKEN_PATH`: ephemeral path where the token is stored (to avoid leakage)
-- `HF_HOME`: cache directory for downloads from HuggingFace Hub, mounted to your data bucket so downloads persist
+- `HF_HOME`: cache directory for downloads from HuggingFace Hub, mounted to your `data` bucket inside the container so downloads persist. 
 
 ## Run and track an experiment
-In this demo we demonstrate how this infrastructure helps train large models. We will fine-tune a large language model, which is computationally expensive task. 
+In this demo we demonstrate how this infrastructure helps train large models. we will fine-tune a large language model on Geoscience dataset, which is computationally expensive task. 
 
-### finetuning a model 
+### Finetuning a model 
 
 in the training life cycle of Large Language Models we have the following Phases
-1. **Pre-Training** :the goal of pre-training is the teach the model general language understanding where the model is trained on massive dataset maybe the internet, Wikipedia website or books, this will result in a base model that has a **general understanding** of the language (they know a little bit about everything at this stage but they may not provide us with information with more specific questions/fields)
+1. **Pre-Training** :the goal of pre-training is the teach the model general language understanding where the model is trained on massive dataset,maybe the internet, Wikipedia website or books, this will result in a base model that has a **general understanding** of the language (they know a little bit about everything at this stage but they may not provide us with information with more specific questions/fields)
 2. **Fine-tune/instruct**: the goal here is to make the model useful for specific tasks and improving its ability to follow instructions, we fine tune the model on a dataset that contain the instructions and the desired outputs
 >[!NOTE]
 >
