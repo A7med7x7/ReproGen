@@ -2,22 +2,22 @@
 In this tutorial, we will explore how to use the [ReproGen](https://github.com/A7med7x7/ReproGen) tool to generate a reproducible project workflow and inspect the infrastructure and platform design for large-model training. 
 ### Prerequisites
 To run this experiment you need the following:
-1. An account on Chameleon Cloud (https://chameleoncloud.org).
-2. Your SSH key added to the Chameleon Cloud site(s).
+1. An account on [Chameleon Cloud](https://chameleoncloud.org).
+2. Configured SSH key added to the Chameleon Cloud sites.(see [create keys](https://teaching-on-testbeds.github.io/hello-chameleon/#:~:text=Exercise%3A%20Create%20SSH%20keys) exercise on Hello Chameleon)
 
-### Experiment resources
+## Experiment resources
 
 For this experiment, we will provision one bare-metal node with 2 GPUs.
-We’ll proceed with the `gpu_p100` NVIDIA node at CHI@TACC. 
+We’ll proceed with the `gpu_p100` NVIDIA node at CHI@TACC (Texas Advanced Computing Center where most GPU bare metal nodes live). 
 
 >[!NOTE]
 >
->You can create a lease first and then generate a project using ReproGen, or generate the project first and create the lease later, just use the same project name when creating the lease.
+>feel free to create a lease first and then generate a project using ReproGen, or generate the project first and create the lease later(Ideally before fetching it), just use the same project name when creating the lease.
 
-### Create a lease
+## Create a lease
 To use resources on the Chameleon testbed, reserve them by creating a lease. Using the Horizon OpenStack web interface, create a lease for a p100 node.
 
-- from the [Chameleon website](https://chameleoncloud.org/hardware/)
+- from the [Chameleon website](https://chameleoncloud.org)
 - click “Experiment” > “CHI@TACC”
 - log in if prompted to do so
 - check the project drop-down menu near the top left (which shows e.g. “CHI-XXXXXX”), and make sure the correct project is selected.
@@ -25,7 +25,7 @@ To use resources on the Chameleon testbed, reserve them by creating a lease. Usi
 Then,
 
 - On the left side, click on `Reservations` > `Leases`, and then click on `Create Lease`:
-    - set the `Name` of the lease to the project_name you provided when generating the project (we used `mistral-instruct`).
+    - set the `Name` of the lease to the project_name you provided when generating the project (we will use `mistral-instruct`).
     - set the start date and length. 3–10 hours is typically sufficient for this experiment.
     - Click Next.
 - On the “Hosts” tab,
@@ -35,14 +35,21 @@ Then,
     - add a filter `gpu.gpu_count` and set it to `2`.
 - Click “Next”. Then, click “Create”. (We won’t include any network resources in this lease. We will configure our network programmatically through the generated project notebooks.)
 
+>[!IMPORTANT]
+>
+The project name we select will be used as a prefix for naming the server and our Object Store Container, and it will shape the commands we use throughout the experiment. Therefore, if you pick a different name, you may need to select the commands carefully here. 
 
 ## Generating a project 
 
-we will use ReproGen to generate a project. ReproGen provides three main benefits:
-1. **Managing resources**: automates cloud setup (object store containers, credentials, servers). The generated notebooks in the `chi` directory handle these steps.
-2. **Reproducible workflows**: provides a dockerized environment tailored to your inputs and an MLflow server to log metrics and artifacts.
+We will use ReproGen to generate a project. ReproGen provides three main benefits:
+1. **Managing resources**: automates cloud setup (object store containers, credentials, servers). The generated notebooks in the `chi` directory handle these steps programmatically.
+2. **Reproducible workflows**: provides a portable Dockerized environment tailored to your inputs and an MLflow server to log metrics and artifacts that will later ensure reproducibility.
 3. **Custom training code**: generates Python scripts and notebooks in `notebooks` and `src` that serve as templates you can adapt.
 ![Elements diagram](images/elements.png)
+
+>[!NOTE]
+>
+>ReproGen makes the cloud infrastructure **easy** for you, so inthe  best cases, you won't have to write or modify the Docker-Compose file, your images, or worry about how to set up the servers. The generated project handles this for you by hiding the complexity involved when setting up the environment, and lets you spin your virtual machine very quickly
 
 To generate a project, run the following command on Chameleon JupyterHub: 
 
@@ -54,38 +61,36 @@ pip install copier
 Create a new project with
 
 ```sh
-copier copy --vcs-ref main https://github.com/A7med7x7/reprogen.git llm-finetune 
+copier copy --vcs-ref main https://github.com/A7med7x7/reprogen.git misrtal-instruct 
 ```
-  
-Below are example answers to the copier prompts:
 
-➜ copier copy --vcs-ref main https://github.com/A7med7x7/reprogen.git home
+Below are the answers to the copier prompts:
 
 Choose configuration mode: `Advanced`
 Project name: `mistral-instruct`
-Git repository URL: (optional) create a public GitHub repository to host the generated project if you want it cloned on the node.
+Git repository URL: (optional) Create a public GitHub repository to host the generated project or add it later manually in the notebook. 
 Select site for compute resources: **CHI@TACC** (we use bare metal here)
 Location for S3 data buckets: **CHI@UC** (you can choose another)
 GPU type for the lease: `nvidia`
 Primary ML framework: `pytorch`
-CUDA version for Jupyter image: `cuda11-latest` (or choose newer like `cuda-12`)
-Server configuration mode: `notebook` (options include `.env` generation, docker-compose, etc.)
+CUDA version for Jupyter image: `cuda11-latest` 
+Server configuration mode: `notebook` (we  can pick either a notebook or SSH into our machine and configure the server)
 Enable Hugging Face integration? `Yes` (we pre-install HF packages and manage HF configuration)
 
 ---
 ## set up the environment 
-Now in the generated project, follow its README to create buckets, configure the server, and set up the environment in the `chi` directory.
+Now in the generated project, follow its README.md to create buckets, configure the server, and set up the environment in the `chi` directory.
 When running `2_configure_server.ipynb`, grab an access token from Hugging Face with read access (see https://huggingface.co/docs/hub/security-tokens) and paste it when prompted.
 
 ### Accessing the Jupyter container
-After you start the dockerized `jupyter` and `mlflow` containers, open them in the browser (one tab for Jupyter Lab and one for the MLflow server) to inspect the setup.
+After you start the Dockerized `jupyter` and `mlflow` containers, open them in the browser (one tab for Jupyter Lab and one for the MLflow server) to inspect the setup.
 
 ### Understanding our setup and tools
 We have:
 - **MLflow server**
 - **Object store containers**
 
-When running experiments we generate artifacts that are crucial for reproducing results. The MLflow tracking server is set up (port 8000) and bound to the host so you can view metrics and artifacts via its web UI.
+When running experiments, we generate artifacts that are crucial for reproducing results. The MLflow tracking server is set up (port 8000) and bound to the host so you can view metrics and artifacts via its web UI.
 
 The MLflow client in the notebook sends HTTP requests to the server to log metrics and artifacts (examples: model checkpoints, parameters, configuration settings, datasets). 
 
