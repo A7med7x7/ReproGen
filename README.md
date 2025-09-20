@@ -121,20 +121,30 @@ They are imported from:
 from utils.mlflow_log import log_git, log_gpu
 ```
 
-We wrote these utility scripts to capture additional details beyond MLflow's native features. Here is what each function does:
+We wrote these utility scripts to capture additional details beyond MLflow's native features. here is what each function does:
 
 ##### `log_git()` — Captures Code Versioning  
 Uses Git commands (via subprocess) to log:  
 - Current branch name  
 - Commit hash  
-- Repository status (clean or dirty)  
+- Repository status (clean or dirty)
+- `git diff` output  
 
 **Example Output:**  
 ```nginx
 commit: a7c3e9d
 branch: main
 status: dirty (1 file modified)
-# and git diff output 
+
+        --- Git Diff ---
+        diff --git a/docker/docker-compose.yml b/docker/docker-compose.yml
+        index 0bcf1e4..9499f7d 100644
+        --- a/docker/docker-compose.yml
+        +++ b/docker/docker-compose.yml
+        @@ -52,7 +52,7 @@ services:
+       - mlflow
+       - server
+       - --backend-store-uri=/mlflow/mlruns 
 ```
 
 ##### `log_python()` — Tracks the Python environment
@@ -151,7 +161,9 @@ torch==2.2.0
 ```
 >[!NOTE]
 >
->In most cases you won't need this function because the auto-log feature supporter in multiple frameworks provide similar funtionality. use it when your framework does not support autologging — see [supported libraries](https://mlflow.org/docs/latest/ml/tracking/autolog/#supported-libraries)
+>In most cases you won't need this function because the auto-log feature supporter in multiple frameworks provide simillar functionality. use it when your framework does not
+support autologging — see [supported libraries](https://mlflow.org/docs/latest/ml/tracking/autolog/#supported-libraries)
+
 ##### `log_gpu()` — Records GPU information
 
 - Detects available GPU devices
@@ -170,12 +182,12 @@ These utilities ensure that each run can be traced back with:
 - The hardware details used/GPU utilization
 
 ---
-#### Using MLflow functions
+#### Using MLflow
 If you have a configuration dictionary you can use:
 ```python
 mlflow.log_params(config)
 ```
-To log multiple metrics:
+To log multiple metrics you add specifiy:
 ```python
 mlflow.log_metrics({
     "epoch_time": epoch_time,
@@ -193,7 +205,7 @@ mlflow.pytorch.log_model(model, name="model")
 
 #### Hugging Face integration 🤗
 
-When enabling Hugging Face integration, the environment installs HF dependencies (see `docker/requirements`) and generates these environment variables:
+When enabling Hugging Face integration, the environment installs HF dependencies (see `docker/requirements`) and generates the following environment variables:
 
 - `HF_TOKEN`: your access token (provided by you)
 - `HF_TOKEN_PATH`: ephemeral path where the token is stored (to avoid leakage)
@@ -209,16 +221,21 @@ in the training life cycle of Large Language Models we have the following Phases
 2. **Fine-tune/instruct**: the goal here is to make the model useful for specific tasks and improving its ability to follow instructions, we fine tune the model on a dataset that contain the instructions and the desired outputs
 >[!NOTE]
 >
->We can take this further by adding Safety to our life-cycle of LLM-finetuning where we make the model outputs safe and ethical but for domestication we will stick to the basic life cycle
+>We can take this further by adding Safety to our life-cycle of LLM-finetuning where we make the model outputs safe and ethical, but for domestication we will stick to the basic life cycle
 
 we will instruct [Mistral-7B-OpenOrca](https://huggingface.co/Open-Orca/Mistral-7B-OpenOrca) an open source LLM with 7 billion parameters that is pre-trained and fine-tuned to outperform the original **Mistral-7B** in reasoning and instruction following tasks. 
-we will use [GeoGPT-QA Dataset](https://huggingface.co/datasets/GeoGPT-Research-Project/GeoGPT-QA) which is a large-scale, synthetically generated collection of 40,000 question-answer pairs. It was created to help fine-tune models on geoscience, we will instruct our Large Language Model with this dataset so it can help us in the future answering questions about geoscience 
+we will use [GeoGPT-QA Dataset](https://huggingface.co/datasets/GeoGPT-Research-Project/GeoGPT-QA) which is a large-scale, synthetically generated collection of 40,400 question-answer pairs. it was created to help fine-tune models on geoscience, we will instruct our Large Language Model with this dataset so it can help us in the future answering questions about geoscience. 
 #### Training techniques 
-we will not be retraining a model from scratch, that would cost millions of dollars and unbelievable amount of time, so fine-tuning is about adaptation, it builds on all the knowledge the model already has it just specializes it, the benefits? we will have a complete custom solution that speak our specific language (geoscience in our case), so we achieve way higher accuracy in these tasks
-one of the techniques we will use in our fine-tuning is **LoRA** its a Parameter-Efficient Fine-Tuning (PEFT) methods stand for **Lower Rank Adaptation**  and the difference is Full fine-tuning adjusts/trains all parameters in a large language model (LLM) and of course this requires massive computational resources, data, and storage. while Parameter-Efficient Fine-Tuning (PEFT) methods update a small subset of parameters maybe 1% or add new small layers, drastically reducing costs and memory needs while preserving the base model's knowledge.
+we will not be retraining a model from scratch, that would take unbelievable amount of time, fine-tuning is about adaptation, it builds on all the knowledge the model already has to specializes it, the benefits? we will have a complete custom solution that speak our specific language (geoscience in our case), so we achieve way higher accuracy in these tasks
+one of the techniques we will use in our fine-tuning is **LoRA** its a Parameter-Efficient Fine-Tuning (PEFT) methods stand for **Lower Rank Adaptation**  and the difference is Full fine-tuning adjusts/trains all parameters in a large language model (LLM) and of course this requires massive computational resources, data, storage and time, while Parameter-Efficient Fine-Tuning (PEFT) methods update a small subset of parameters maybe 1% or add new small layers, drastically reducing costs and memory needs while preserving the base model's knowledge.
 
+| Metric            | Fine-Tuning              | PEFT (LoRA)              |
+|-------------------|--------------------------|--------------------------|
+| Training Time     | ~8 hours                 | ~2 hours                 |
+| GPU Memory Usage  | ~16 GB                   | ~6 GB                    |
+| Validation Accuracy | 93%                     | 91%                      |
+| Deployment Size   | Full model (1.2 GB)      | Adapter weights (50 MB)  |
 
-![Fine-Tuning vs PEFT (Parameter-Efficient Fine-Tuning): A Practical Guide |  by whyamit404 | Medium](https://miro.medium.com/v2/resize:fit:1400/1*JQvVLGKhcw6jX-Ag0_NS2g.png)
 
 This approach allows tasks that previously took days to be completed in hours, and you can run it on a machine with just 16 GB of RAM, rather than needing a costly one say a 100 GB.
 
@@ -235,18 +252,17 @@ open a terminal shell from `file-> new launcher -> terminal` then run the comman
 python geoscience_mistral_lora_trainer.py 
 ```
 
-At this point, you’ll notice the code is broken and some dependencies are missing.  
+At this point, you’ll notice the code is raised error that some a dependency is missing.  
 This is part of the process we practice adding dependencies to the runtime.
 most of the time you want your software dependencies (any 3rd-party library) inside your `requirements.txt` so they’re installed automatically when running Docker Compose.
 
-SSH into the machine, then stop the containers:
+SSH into the machine, from you home directory stop the containers:
 ```vb
 docker compose --env-file .env -f mistral-instruct/docker/docker-compose.yml down
 ```
 >[!NOTE]
 >
 >if it didn't work the generated command is provided in your generated `README.md` at your project repo root.
-
 
 and lets add the missing dependencies (sentencepiece) in the `docker/requirements.txt` using 
 ```
@@ -262,7 +278,7 @@ Now you can access the web interface for both containers.
  before running the script 
 >[!NOTE]
 >
->the original dataset have around 40,000 samples, for demonstration our experiment  will use only 1% (414 samples) and 1 epoch, so we don't wait for a long amount of time to see complete the process. you can simply used the portion you want from the dataset by manipulating the variable `train_subset_pct` in the training script. and `epochs` under the parse_args() function. 
+>the original dataset have around 40,400 samples, for demonstration, our experiment will use only 1% (414 samples) and 1 epoch, so we don't wait for a long amount of time to see complete the process. you can simply use the portion you want from the dataset by manipulating the variables `train_subset_pct` in the training script. and `epochs` under the parse_args() function. 
 
 ---
 
@@ -404,5 +420,5 @@ At this stage, you have:
 - Tested your **fine-tuned model** against the base model to see the improvements in responses.
 
 you can play with: 
-1. **Compare Results:** Use the MLflow UI to visualize how the fine-tuned model performs cs, artifacts).
+1. **Compare Results:** Use the MLflow UI to visualize how the fine-tuned model performs cs, artifacts.
 2. **Iterate:** Adjust hyperparameters like `learning_rate`, `epochs`, or `grad_accumulation_steps` and re-run to see if you can improve performance further.
