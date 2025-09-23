@@ -305,12 +305,14 @@ now you can access the web interface for both containers.
 
 ### Baseline Model (Before Fine-tuning)
 
-before fine-tuning, we’ll run a notebook to check how the **base model** answers geoscience questions
+before fine-tuning, we’ll run a notebook to check how the **base model** answers geoscience questions. 
+we will start by getting the material on our Juypter lab in the Jupyter temrinal write the commands:
 ```sh
 cd work/mistral-instruct/notebooks
 wget https://raw.githubusercontent.com/A7med7x7/ReproGen/training-demo/notebooks/1_baseline_model.ipynb 
 ```
-Run the cells, and you’ll see the model gives answers that _sound reasonable_ but aren’t very accurate.
+
+Run the cells in the notebook `1_baseline_model.ipynb`, and you’ll see the model gives answers that _sound reasonable_ but aren’t very accurate.
 
 For example, a dataset answer might look like:
 
@@ -324,21 +326,22 @@ In the Kuala Terengganu coastal zone, land-use suitability assessment is conduct
 
 1. Geographic Information Systems (GIS): GIS is a powerful tool that integrates, analyzes, and displays geographic data. It allows users to create maps, perform spatial analyses, and generate reports to support decision-making. In the Kuala Terengganu coastal zone, GIS is used to create digital maps of land-use patterns, elevation, soil types, and other relevant data layers. These layers can then be combined and analyzed to determine the most suitable land uses for a specific
 ```
-so the models knows something about Geoscience but the information isn't accurate if we were to ask it a question that is new it might hallucinate and provide us with unrelated answers. 
+
+so the model knows something about Geoscience but the information isn't accurate if we were to ask it a new question, it might hallucinate and provide us with unrelated answers. 
 
 --- 
 ### Fine-tuning the Model
 
 now lets fine tune our model, run the command: 
-```vb
+```sh
 python geoscience_mistral_lora_trainer.py 
 ```
 
 >[!TIP]
 >
->during the experiemnt running you can use a utility we installed earlier when configuring 
->our server its called `nvtop` it help us monitor the GPU usage via the CLI In a terminal. 
->on the  host (not inside the container), run 
+>while the experiemnt is running you can use a utility we installed earlier when configuring 
+>our server, its called `nvtop` it help us monitor the GPU usage via the CLI. 
+>on the host (not inside the container), run 
 >```
 >nvtop
 >```
@@ -348,9 +351,9 @@ python geoscience_mistral_lora_trainer.py
 >2. **Real-Time Usage Graphs:** The middle section shows a historical view of GPU and memory utilization.
 >3. **Process List:** The bottom table details which processes are using the GPUs and their resource consumption.
 
-This script applies **LoRA fine-tuning** on the selected subset of the dataset.  
-During training, logs and metrics are automatically tracked in **MLflow**.
-in the our fine-tuning script we set experiment with the name
+our training script `geoscience_mistral_lora_trainer.py ` applies **LoRA fine-tuning** on the selected subset of the dataset.  
+during training, logs and metrics are automatically tracked in **MLflow**.
+we set experiment with the name
 
 ```python
 mlflow.set_experiment("Mistral-instruct-LoRA")
@@ -362,7 +365,7 @@ mlflow.pytorch.autolog(log_models=False)
 ```
 >[!NOTE]
 >
->we set log_models to False because we are not interested in logging the model now and it will take a lot time and disk space to log 7 billion parameter model, or even break the code. 
+>we set log_models to `False` because we are not interested in logging the model now, and it will take a lot time and disk space to log 7 billion parameter model, or even break the code. 
 
 we use our utility functions 
 ```python 
