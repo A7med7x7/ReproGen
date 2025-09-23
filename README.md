@@ -219,7 +219,7 @@ When enabling HuggingFace integration, the environment installs HuggingFace depe
 - `HF_TOKEN_PATH`: ephemeral path where the token is stored (to avoid leakage)
 - `HF_HOME`: cache directory for downloads from HuggingFace Hub, mounted to your `data` bucket inside the container so downloads persist. 
 
->[!NOTE] following the material on the generated README.md and the notebooks on `chi` directory you know about the `data` bucket we use and how it maps into the folder `/mnt/data` in your local machine, this is again bind mounted with the Jupyter container to make in the directory `/home/jovyan/data`. don't let this confuses you. 
+>[!NOTE] following the material on the generated `README.md` and the notebooks on `chi` directory you know about the `data` bucket we use and how it maps into the folder `/mnt/data` in your local machine, this is again bind mounted with the Jupyter container to make in the directory `/home/jovyan/data`. thats why we cache our download from HuggingFace in `home/jovyan/data` it traces back to the data bucket, don't let this confuses you. 
 ![the data bucket](/images/data-bucket.png)
 
 ## Run and track a Pytorch experiment
