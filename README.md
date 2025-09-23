@@ -53,7 +53,7 @@ We will use ReproGen to generate a project. ReproGen provides three main benefit
 >ReproGen makes the cloud infrastructure **easy** for you, so inthe  best cases, you won't have to write or modify the Docker-Compose file, your images, or worry about how to set up the servers. The generated project handles this for you by hiding the complexity involved when setting up the environment, and lets you spin your virtual machine very quickly
 
 --- 
-#### Install copier
+### Install copier
 
 >[!IMPORTANT]
 > when generating your project in your local machine you will need to copy it again to in the Chameleon JupyterHub either using `scp` or pushing the code to a repository and clone it. the materials will only work in  Chameleon JupyterHub environment. 
@@ -75,8 +75,8 @@ Below are the answers to the copier prompts:
 Choose configuration mode: `Advanced` <br>
 Project name: `mistral-instruct` <br>
 Git repository URL: (optional) Create a public GitHub repository to host the generated project or add it later manually in the notebook.  <br>
-Select site for compute resources: **CHI@TACC** (we use bare metal here). <br>
-Location for S3 data buckets: **CHI@UC** (you can choose another). <br>
+Select site for compute resources: `CHI@TACC` (we use bare metal here). <br>
+Location for S3 data buckets: `CHI@UC` (you can choose another). <br>
 GPU type for the lease: `nvidia`. <br>
 Primary ML framework: `pytorch`. <br>
 CUDA version for Jupyter image: `cuda11-latest`   
