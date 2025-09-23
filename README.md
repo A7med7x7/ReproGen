@@ -278,13 +278,29 @@ python geoscience_mistral_lora_trainer.py
 ```
 
 At this point, you’ll notice the code raised an error that some a dependency is missing.  
-This is part of the process we practice adding dependencies to the runtime.
-most of the time you want your software dependencies (any 3rd-party library) inside your `docker\requirements.txt` so they’re installed automatically when running Docker Compose.
+```vb
+ImportError: 
+LlamaTokenizer requires the SentencePiece library but it was not found in your environment. Check out the instructions on the
+installation page of its repo: https://github.com/google/sentencepiece#installation and follow the ones
+that match your environment. Please note that you may need to restart your runtime after installation.
+
+ERROR: Tokenizer load failed.
+```
+This is part of the process isw where we practice adding dependencies to the runtime.
+most of the time you want your software dependencies (any 3rd-party library) inside your `docker\requirements.txt` as a best practice so they’re installed automatically when running Docker Compose.
 
 SSH into your machine, from your home directory and stop the containers:
+
 ```sh
 docker compose --env-file .env -f mistral-instruct/docker/docker-compose.yml down
 ```
+
+or using your `2_configure_server.ipynb` notebook, add the following line to your notebook:
+
+```python
+s.execute("docker compose --env-file .env -f mistral-instruct/docker/docker-compose.yml down")
+```
+
 >[!NOTE]
 >
 >if the command to stop the container didn't work, the generated command for you is provided in your generated `README.md` at your project repo root.
@@ -300,6 +316,11 @@ nano mistral-instruct/docker/requirements
 ```
 
 paste the library name `sentencepiece` and save the file using `command/ctrl` + `O` and exit with `command/ctrl` + `X`
+
+using notebook:
+```python
+s.execute("echo "sentencepiece" >> requirements.txt")
+```
 run the containers again 
 
 ```sh
