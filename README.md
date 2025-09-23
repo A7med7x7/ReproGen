@@ -52,7 +52,8 @@ We will use ReproGen to generate a project. ReproGen provides three main benefit
 >
 >ReproGen makes the cloud infrastructure **easy** for you, so inthe  best cases, you won't have to write or modify the Docker-Compose file, your images, or worry about how to set up the servers. The generated project handles this for you by hiding the complexity involved when setting up the environment, and lets you spin your virtual machine very quickly
 
-To generate a project, run the following command on Chameleon JupyterHub: 
+>[!IMPORTANT] when generating your project in your local machine you will need to copy it again to in the Chameleon JupyterHub either using `scp` or pushing the code to a repository and clone it. the materials will only work in  Chameleon JupyterHub environment. 
+To generate a project, run the following command on Chameleon JupyterHub or your local machine: 
 
 ```sh
 pip install copier
