@@ -267,10 +267,12 @@ open a terminal shell from the launcher `Other -> terminal` or `file-> new launc
 
 ```sh
 cd ~/work/mistral-instruct/src 
-wget https://github.com/A7med7x7/ReproGen/blob/3e6290f4904b5ee170afb3c483d2d0c0819d95e2/src/Pytorch_manual_log_example.py 
+wget https://raw.githubusercontent.com/A7med7x7/ReproGen/training-demo/src/geoscience_mistral_lora_trainer.py
 ```
 
 
+
+run the script using:
 ```sh
 python geoscience_mistral_lora_trainer.py 
 ```
