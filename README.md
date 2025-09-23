@@ -271,21 +271,27 @@ At this point, you’ll notice the code raised an error that some a dependency i
 This is part of the process we practice adding dependencies to the runtime.
 most of the time you want your software dependencies (any 3rd-party library) inside your `docker\requirements.txt` so they’re installed automatically when running Docker Compose.
 
-SSH into the machine, from you home directory stop the containers:
+SSH into your machine, from your home directory and stop the containers:
 ```sh
 docker compose --env-file .env -f mistral-instruct/docker/docker-compose.yml down
 ```
 >[!NOTE]
 >
->if it didn't work the generated command is provided in your generated `README.md` at your project repo root.
+>if the command to stop the container didn't work, the generated command for you is provided in your generated `README.md` at your project repo root.
 
-and lets add the missing dependencies (sentencepiece) in the `docker/requirements.txt` using 
+and lets add the missing dependencies (sentencepiece) in the `docker/requirements.txt` using
+```sh
+echo "sentencepiece" >> requirements.txt
 ```
+or 
+
+```sh
 nano mistral-instruct/docker/requirements
 ```
+
 paste the library name `sentencepiece` and save the file using `command/ctrl` + `O` and exit with `command/ctrl` + `X`
 run the containers again 
-```vb
+```sh
 docker compose --env-file .env -f mistral-instruct/docker/docker-compose.yml up -d --build
 ```
 Now you can access the web interface for both containers.
