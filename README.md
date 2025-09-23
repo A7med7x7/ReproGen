@@ -161,7 +161,7 @@ torch==2.2.0
 ```
 >[!NOTE]
 >
->In most cases you won't need this function because the auto-log feature supporter in multiple frameworks provide simillar functionality. use it when your framework does not
+>In most cases you won't need this function because the [auto-log feature](https://mlflow.org/docs/latest/ml/tracking/autolog/) is supported in multiple frameworks provide simillar functionality. use it when your framework does not
 support autologging — see [supported libraries](https://mlflow.org/docs/latest/ml/tracking/autolog/#supported-libraries)
 
 ##### `log_gpu()` — Records GPU information
@@ -173,7 +173,7 @@ support autologging — see [supported libraries](https://mlflow.org/docs/latest
   - GPU name
   - Driver version
   - CUDA/ROCm version
-  - gpu-type-smi output for inspection
+  - gpu-smi output for inspection
 
 These utilities ensure that each run can be traced back with:
 
@@ -183,11 +183,12 @@ These utilities ensure that each run can be traced back with:
 
 ---
 #### Using MLflow
-If you have a configuration dictionary you can use:
+If you have a configuration dictionary set for you experiment (e.g parameters like the `learning-rate`, `random-seed`... )you can use:
 ```python
-mlflow.log_params(config)
+mlflow.log_params(config) # where config is your parameters dictionary 
 ```
-To log multiple metrics you add specifiy:
+
+when logging multiple metrics, you add specifiy:
 ```python
 mlflow.log_metrics({
     "epoch_time": epoch_time,
@@ -198,7 +199,8 @@ mlflow.log_metrics({
     "trainable_params": trainable_params,
 }, step=epoch)
 ```
-To log a model with MLflow (for PyTorch):
+
+To log a model with MLflow (for PyTorch): 
 ```python
 mlflow.pytorch.log_model(model, name="model")
 ```
@@ -211,8 +213,19 @@ When enabling Hugging Face integration, the environment installs HF dependencies
 - `HF_TOKEN_PATH`: ephemeral path where the token is stored (to avoid leakage)
 - `HF_HOME`: cache directory for downloads from HuggingFace Hub, mounted to your `data` bucket inside the container so downloads persist. 
 
-## Run and track an experiment
-In this demo we demonstrate how this infrastructure helps train large models. we will fine-tune a large language model on Geoscience dataset, which is computationally expensive task. 
+>[!NOTE] following the material on the generated README.md and the notebooks on `chi` directory you know about the `data` bucket we use and how it maps into the folder `/mnt/data` in your local machine, this is again bind mounted with the Jupyter container to make in the directory `/home/jovyan/data`. don't let this confuses you. 
+![the data bucket](/images/data-bucket.png)
+
+## Run and track a Pytorch experiment
+in this demo we will demonstrate how this infrastructure helps train large models. we will fine-tune a large language model on Geoscience dataset, which is computationally expensive task. using our MLflow tracking server to track the experiment.
+
+**after this section you be able to:**
+
+
+* **type of artifacts to log** understand what type of artifacts, parameters, and metrics may be logged to an experiment tracking service (MLFlow or otherwise). 
+* **system metrics** configure system metrics logging in MLFlow
+* **Monitor GPU usage** during training with the `nvtop` utility.
+* **Use the MLflow UI** to explore detailed run information, including system metrics, environment details, and model adapters.
 
 ### Finetuning a model 
 
@@ -221,13 +234,15 @@ in the training life cycle of Large Language Models we have the following Phases
 2. **Fine-tune/instruct**: the goal here is to make the model useful for specific tasks and improving its ability to follow instructions, we fine tune the model on a dataset that contain the instructions and the desired outputs
 >[!NOTE]
 >
->We can take this further by adding Safety to our life-cycle of LLM-finetuning where we make the model outputs safe and ethical, but for domestication we will stick to the basic life cycle
+>We can take this further by adding one more phase: **Safety** to our life-cycle of LLM-finetuning where we make the model outputs safe and ethical, but for domestication we will stick to the basic life cycle
 
 we will instruct [Mistral-7B-OpenOrca](https://huggingface.co/Open-Orca/Mistral-7B-OpenOrca) an open source LLM with 7 billion parameters that is pre-trained and fine-tuned to outperform the original **Mistral-7B** in reasoning and instruction following tasks. 
 we will use [GeoGPT-QA Dataset](https://huggingface.co/datasets/GeoGPT-Research-Project/GeoGPT-QA) which is a large-scale, synthetically generated collection of 40,400 question-answer pairs. it was created to help fine-tune models on geoscience, we will instruct our Large Language Model with this dataset so it can help us in the future answering questions about geoscience. 
+
 #### Training techniques 
-we will not be retraining a model from scratch, that would take unbelievable amount of time, fine-tuning is about adaptation, it builds on all the knowledge the model already has to specializes it, the benefits? we will have a complete custom solution that speak our specific language (geoscience in our case), so we achieve way higher accuracy in these tasks
-one of the techniques we will use in our fine-tuning is **LoRA** its a Parameter-Efficient Fine-Tuning (PEFT) methods stand for **Lower Rank Adaptation**  and the difference is Full fine-tuning adjusts/trains all parameters in a large language model (LLM) and of course this requires massive computational resources, data, storage and time, while Parameter-Efficient Fine-Tuning (PEFT) methods update a small subset of parameters maybe 1% or add new small layers, drastically reducing costs and memory needs while preserving the base model's knowledge.
+we will not be retraining a model from scratch, that would take unbelievable amount of time, fine-tuning is about adaptation, it builds on all the knowledge the model already has to specializes it, the benefits? we will have a complete custom solution that speak our specific language (geoscience in our case), so we achieve way higher accuracy in these tasks.
+
+one of the techniques we will use in our fine-tuning is **LoRA**, its a Parameter-Efficient Fine-Tuning (PEFT) method stand for **Lower Rank Adaptation**  and the difference is: **Full fine-tuning** adjusts/trains all parameters in a large language model (LLM) and of course this requires massive computational resources, data, storage and time, while **Parameter-Efficient Fine-Tuning (PEFT)** methods update a small subset of parameters maybe 1% or add new small layers, drastically reducing costs and memory needs while preserving the base model's knowledge.
 
 | Metric            | Fine-Tuning              | PEFT (LoRA)              |
 |-------------------|--------------------------|--------------------------|
@@ -240,24 +255,24 @@ one of the techniques we will use in our fine-tuning is **LoRA** its a Parameter
 This approach allows tasks that previously took days to be completed in hours, and you can run it on a machine with just 16 GB of RAM, rather than needing a costly one say a 100 GB.
 
 ## Run the experiment 
-Inside our Jupyter server we’ll grab the training script for fine-tuning the model and run it.  
+Inside our Jupyter server we’ll grab the training script for fine-tuning the model and run it.
 
-```nginx
+```sh
 cd ~/work/mistral-insrtuct/src 
 wget https://github.com/A7med7x7/ReproGen/blob/3e6290f4904b5ee170afb3c483d2d0c0819d95e2/src/Pytorch_manual_log_example.py 
 ```
 open a terminal shell from `file-> new launcher -> terminal` then run the command:
 
-```vb
+```sh
 python geoscience_mistral_lora_trainer.py 
 ```
 
-At this point, you’ll notice the code is raised error that some a dependency is missing.  
+At this point, you’ll notice the code raised an error that some a dependency is missing.  
 This is part of the process we practice adding dependencies to the runtime.
-most of the time you want your software dependencies (any 3rd-party library) inside your `requirements.txt` so they’re installed automatically when running Docker Compose.
+most of the time you want your software dependencies (any 3rd-party library) inside your `docker\requirements.txt` so they’re installed automatically when running Docker Compose.
 
 SSH into the machine, from you home directory stop the containers:
-```vb
+```sh
 docker compose --env-file .env -f mistral-instruct/docker/docker-compose.yml down
 ```
 >[!NOTE]
