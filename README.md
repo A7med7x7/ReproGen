@@ -74,7 +74,7 @@ Below are the answers to the copier prompts:
 
 Choose configuration mode: `Advanced` <br>
 Project name: `mistral-instruct` <br>
-Git repository URL: (optional) Create a public GitHub repository to host the generated project or add it later manually in the notebook.  <br>
+Git repository URL: (optional) Create a public GitHub repository to host the generated project or add it later manually in the notebook `1_create_server_nvidia.ipynb` in the _Retrieve code and notebooks on the instance_ section.  <br>
 Select site for compute resources: `CHI@TACC` (we use bare metal here). <br>
 Location for S3 data buckets: `CHI@UC` (you can choose another). <br>
 GPU type for the lease: `nvidia`. <br>
@@ -85,13 +85,13 @@ Enable Hugging Face integration? `Yes` (we pre-install HF packages and manage HF
 
 ---
 ## set up the environment 
-Now in the generated project, follow its README.md to create buckets, configure the server, and set up the environment in the `chi` directory.
-When running `2_configure_server.ipynb`, grab an access token from Hugging Face with read access (see https://huggingface.co/docs/hub/security-tokens) and paste it when prompted.
+Now in the generated project, follow its README.md to create buckets, configure the server, and set up the environment.
+once your reached step number **3 Configure and start your Jupyter environment** at notebook `2_configure_server.ipynb` or if you are using the SSH-ing into your machine using the terminal, make sure grab an access token from HuggingFace with read access (see [security-tokens](https://huggingface.co/docs/hub/security-tokens)) and paste it when prompted.
 
 ### Accessing the Jupyter container
 After you start the Dockerized `jupyter` and `mlflow` containers, open them in the browser (one tab for Jupyter Lab and one for the MLflow server) to inspect the setup.
 
-### Understanding our setup and tools
+## Understanding our setup and tools
 We have:
 - **MLflow server**
 - **Object store containers**
@@ -100,8 +100,8 @@ When running experiments, we generate artifacts that are crucial for reproducing
 
 The MLflow client in the notebook sends HTTP requests to the server to log metrics and artifacts (examples: model checkpoints, parameters, configuration settings, datasets). 
 
-![Setup diagram](images/setup.png)
-These data are stored in two object-store containers (S3-compatible). See notebook `0_create_buckets.ipynb`.
+![Setup diagram](images/mlflow-setup.png)
+These data is stored in two object-store containers (S3-compatible). See notebook `0_create_buckets.ipynb`.
 1. **Backend store**: where structured metrics and parameters are stored (mounted at `/mnt/metrics`).
 2. **Artifacts store**: where unstructured artifacts (model checkpoints, pickled models, files) are stored. The MLflow server accesses this bucket directly (not mounted), it inject your Chameleon credentials into the container runtime so MLflow can access the object store.
 These elements are what makes our MLflow tracking server setup; it is suitable for team use as well as personal use.
