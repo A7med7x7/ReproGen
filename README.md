@@ -291,22 +291,22 @@ nano mistral-instruct/docker/requirements
 
 paste the library name `sentencepiece` and save the file using `command/ctrl` + `O` and exit with `command/ctrl` + `X`
 run the containers again 
+
 ```sh
 docker compose --env-file .env -f mistral-instruct/docker/docker-compose.yml up -d --build
 ```
-Now you can access the web interface for both containers.
+now you can access the web interface for both containers.
 
- before running the script 
 >[!NOTE]
 >
->the original dataset have around 40,400 samples, for demonstration, our experiment will use only 1% (414 samples) and 1 epoch, so we don't wait for a long amount of time to see complete the process. you can simply use the portion you want from the dataset by manipulating the variables `train_subset_pct` in the training script. and `epochs` under the parse_args() function. 
+>the original dataset have around 40,400 samples, for demonstration, our experiment will use only 1% (414 samples) and 1 epoch, so we don't wait for a long amount of time to complete the process. you can simply use the portion you want from the dataset by manipulating the variables `train_subset_pct` in the training script. and `epochs` under the parse_args() function. 
 
 ---
 
 ### Baseline Model (Before Fine-tuning)
 
 before fine-tuning, we’ll run a notebook to check how the **base model** answers geoscience questions
-```vb
+```sh
 cd work/mistral-instruct/notebooks
 wget https://raw.githubusercontent.com/A7med7x7/ReproGen/training-demo/notebooks/1_baseline_model.ipynb 
 ```
