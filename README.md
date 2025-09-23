@@ -261,13 +261,15 @@ one of the techniques we will use in our fine-tuning is **LoRA**, its a Paramete
 This approach allows tasks that previously took days to be completed in hours, and you can run it on a machine with just 16 GB of RAM, rather than needing a costly one say a 100 GB.
 
 ## Run the experiment 
-Inside our Jupyter server we’ll grab the training script for fine-tuning the model and run it.
+Inside our Jupyter container we’ll grab the training script for fine-tuning the model and run it.
+
+open a terminal shell from the launcher `Other -> terminal` or `file-> new launcher -> terminal` then run the command:
 
 ```sh
-cd ~/work/mistral-insrtuct/src 
+cd ~/work/mistral-instruct/src 
 wget https://github.com/A7med7x7/ReproGen/blob/3e6290f4904b5ee170afb3c483d2d0c0819d95e2/src/Pytorch_manual_log_example.py 
 ```
-open a terminal shell from `file-> new launcher -> terminal` then run the command:
+
 
 ```sh
 python geoscience_mistral_lora_trainer.py 
