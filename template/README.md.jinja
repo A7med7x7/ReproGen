@@ -1,13 +1,13 @@
 # {{ project_name }}
 
-Welcome! This project is designed to help you **run ML reproducible experiments on Chameleon Cloud** , follow the guide below in order to know how to use the generated project. 
+Welcome! This project is designed to help you **run reproducible ML experiments on Chameleon Cloud** , follow the guide below in order to know how to use this generated project. 
 
 ## Purpose of this README
 
 It guides you through how to **provision resources, create, and configure servers using notebooks, and setup your environment** on Chameleon Cloud.  
 
 >[!TIP]
-> If you are looking for instructions on **how to generate this project** from the template generator, head to the **[main README](https://github.com/A7med7x7/ReproGen/blob/dev/README.md) at the root of the template generator repository**.
+> If you are looking for instructions on **how to generate this project** from the template generator, head to the **[main README](https://github.com/A7med7x7/ReproGen/blob/dev/README.md)**.
 
 ### Prerequisites
 
@@ -140,19 +140,19 @@ after your build finished, with the output
  ```
 
 you can access your Jupyter Lab and MLflow UI 
-    1. Access your jupyter: you can grab the token from running image using the command:
+1. Access your jupyter: you can grab the token from running image using the command:
 
     ```sh
     docker exec jupyter jupyter server list | tail -n 1 | cut -f1 -d" " | sed "s/localhost/$(curl -s ifconfig.me)/"
     ```
 
     Open the printed URL in your browser.
-    2. Access MLflow UI 
+2. Access MLflow UI 
 
     ```sh
     echo "http://$(curl -s ifconfig.me):$(docker port mlflow 8000 | cut -d':' -f2)"
-
     ```
+    
 Open this URL in your browser to see your experiments and logs.
 
 ### 5  Stop the Containerized Environment
