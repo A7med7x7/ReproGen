@@ -101,13 +101,14 @@ When running experiments, we generate artifacts that are crucial for reproducing
 The MLflow client in the notebook sends HTTP requests to the server to log metrics and artifacts (examples: model checkpoints, parameters, configuration settings, datasets). 
 
 ![Setup diagram](images/mlflow-setup.png)
-These data is stored in two object-store containers (S3-compatible). See notebook `0_create_buckets.ipynb`.
+The data is stored in two object-store containers (S3-compatible). 
 1. **Backend store**: where structured metrics and parameters are stored (mounted at `/mnt/metrics`).
-2. **Artifacts store**: where unstructured artifacts (model checkpoints, pickled models, files) are stored. The MLflow server accesses this bucket directly (not mounted), it inject your Chameleon credentials into the container runtime so MLflow can access the object store.
+2. **Artifacts store**: where unstructured artifacts (model checkpoints, pickled models, files) are stored. The MLflow server accesses this bucket directly (it is not mounted on our node as a filesystem), it inject the Chameleon credentials you created earlier in notebook `0_create_buckets.ipynb` into the container runtime so MLflow can access the object store. <br>
 These elements are what makes our MLflow tracking server setup; it is suitable for team use as well as personal use.
 You can view the Docker Compose configuration at `docker/docker-compose.yml`.
 
-We track experiments by name; each MLflow run is recorded under the an experiment so you can compare runs and extract insights. in the generated code snippets under `notebooks` and `src` directories you will find examples like: 
+### MLflow Experiment and Runs  
+We track experiments by name; each MLflow run is recorded under the an experiment so you can compare runs and extract insights. in the generated code snippets under `notebooks` and `src` directories you will find examples that were generated as a template for you to plug your code like: 
 ```python
 mlflow.set_experiment("project_name")  # replaced with your project name
 ```
