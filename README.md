@@ -189,12 +189,12 @@ These utilities ensure that each run can be traced back with:
 
 ---
 #### Using MLflow
-If you have a configuration dictionary set for you experiment (e.g parameters like the `learning-rate`, `random-seed`... )you can use:
+If you have a configuration dictionary for you experiment (e.g parameters like the `learning-rate`, `random-seed`... )you can use:
 ```python
 mlflow.log_params(config) # where config is your parameters dictionary 
 ```
 
-when logging multiple metrics, you add specifiy:
+when logging multiple metrics, you can specifiy metrics you are interested in logging:
 ```python
 mlflow.log_metrics({
     "epoch_time": epoch_time,
@@ -213,7 +213,7 @@ mlflow.pytorch.log_model(model, name="model")
 
 #### Hugging Face integration 🤗
 
-When enabling Hugging Face integration, the environment installs HF dependencies (see `docker/requirements`) and generates the following environment variables:
+When enabling HuggingFace integration, the environment installs HuggingFace dependencies (see `docker/requirements`) and generates the following environment variables:
 
 - `HF_TOKEN`: your access token (provided by you)
 - `HF_TOKEN_PATH`: ephemeral path where the token is stored (to avoid leakage)
