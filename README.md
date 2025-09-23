@@ -67,16 +67,16 @@ copier copy --vcs-ref main https://github.com/A7med7x7/reprogen.git misrtal-inst
 
 Below are the answers to the copier prompts:
 
-Choose configuration mode: `Advanced`
-Project name: `mistral-instruct`
-Git repository URL: (optional) Create a public GitHub repository to host the generated project or add it later manually in the notebook. 
-Select site for compute resources: **CHI@TACC** (we use bare metal here)
-Location for S3 data buckets: **CHI@UC** (you can choose another)
-GPU type for the lease: `nvidia`
-Primary ML framework: `pytorch`
-CUDA version for Jupyter image: `cuda11-latest` 
-Server configuration mode: `notebook` (we  can pick either a notebook or SSH into our machine and configure the server)
-Enable Hugging Face integration? `Yes` (we pre-install HF packages and manage HF configuration)
+Choose configuration mode: `Advanced` <br>
+Project name: `mistral-instruct` <br>
+Git repository URL: (optional) Create a public GitHub repository to host the generated project or add it later manually in the notebook.  <br>
+Select site for compute resources: **CHI@TACC** (we use bare metal here). <br>
+Location for S3 data buckets: **CHI@UC** (you can choose another). <br>
+GPU type for the lease: `nvidia`. <br>
+Primary ML framework: `pytorch`. <br>
+CUDA version for Jupyter image: `cuda11-latest`   
+Server configuration mode: `notebook` (we  can pick either a notebook or SSH into our machine and configure the server). <br>
+Enable Hugging Face integration? `Yes` (we pre-install HF packages and manage HF configuration). 
 
 ---
 ## set up the environment 
